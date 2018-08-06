@@ -4,17 +4,17 @@ matrix:
   include:
     - os: linux
       env: Linux
-      dist: trusty
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-5
+      dist: xenial
+#      addons:
+#        apt:
+#          sources:
+#            - ubuntu-toolchain-r-test
+#          packages:
+#            - g++-5
       script:
         - mkdir build
         - cd build
-        - export CC=gcc-5 && export CXX=g++-5
+#        - export CC=gcc-5 && export CXX=g++-5
         - cmake -DENABLE_CODE_COVERAGE=ON ..
         - make -j
         - test/fs-test -s -r compact
