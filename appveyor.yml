@@ -2,7 +2,6 @@ os: Visual Studio 2017
 
 platform:
   - x64
-  - x86
 
 configuration:
   - Debug
@@ -19,10 +18,9 @@ before_build:
   - pwd
   - cmake --version
   - echo %platform% %configuration%
-  - if %platform%==x64 (set arch="Win64") else (set arch="Win86")
   - mkdir build
   - cd build
-  - cmake -G "Visual Studio 15 2017 %arch%" ..
+  - cmake -G "Visual Studio 15 2017 Win64" ..
 
 build:
   project: C:\projects\libfs\build\libfs.sln
