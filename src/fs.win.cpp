@@ -4,4 +4,8 @@
  * @author Jian Chen <admin@chensoft.com>
  * @link   http://chensoft.com
  */
- 
+#ifdef _WIN32
+
+#include "fs/fs.hpp"
+
+#endif
