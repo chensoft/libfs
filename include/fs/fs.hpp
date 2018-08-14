@@ -6,12 +6,27 @@
  */
 #pragma once
 
+#include <system_error>
 #include <string>
 #include <vector>
 #include <ctime>
 
 namespace fs
 {
+    // -------------------------------------------------------------------------
+    // status
+    // todo use in more functions?
+    // -------------------------------------------------------------------------
+    class status
+    {
+    public:
+        explicit status(int code = 0) : error(code, std::generic_category()) {}
+        explicit operator bool() const { return !error; }
+
+        std::error_code error;
+    };
+
+
     // -------------------------------------------------------------------------
     // sys
     // -------------------------------------------------------------------------
@@ -165,4 +180,29 @@ namespace fs
 
     // Get file size
     std::size_t filesize(const std::string &file);
+
+    // -------------------------------------------------------------------------
+    // operate
+    // -------------------------------------------------------------------------
+
+    // Set access and modification time of the file, create file and its dir if it's not exist
+    // @param file the file to be access or create
+    // @param mtime modification time, if zero then use current time
+    // @param atime access time, if zero then use mtime
+    status touch(const std::string &file, std::time_t mtime = 0, std::time_t atime = 0);
+
+    // Create a directory
+    // @param mode default mode is rwxr-xr-x
+    // @param recursive recursively or not
+    // todo how does mode represent on Windows S_IRWXU xxx
+    status create(const std::string &dir, std::uint16_t mode = 0, bool recursive = true);
+
+    // Rename a file or directory
+    status rename(const std::string &path_old, const std::string &path_new);
+
+    // Remove a file or directory
+    status remove(const std::string &path);
+
+    // Copy a file or directory
+    status copy(const std::string &path_old, const std::string &path_new);
 }
