@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include <ctime>
 
 namespace fs
 {
@@ -147,4 +148,21 @@ namespace fs
 
     // Check if the file or directory is executable
     bool isExecutable(const std::string &path);
+
+    // -------------------------------------------------------------------------
+    // property
+    // -------------------------------------------------------------------------
+
+    // Get file or directory's access time
+    // todo high dpi timestamp?
+    std::time_t atime(const std::string &path);
+
+    // Get file or directory's modification time
+    std::time_t mtime(const std::string &path);
+
+    // Get file or directory's create time
+    std::time_t ctime(const std::string &path);
+
+    // Get file size
+    std::size_t filesize(const std::string &file);
 }

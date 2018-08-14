@@ -5,6 +5,7 @@
  * @link   http://chensoft.com
  */
 #include "fs/fs.hpp"
+#include <sys/stat.h>
 
 // -----------------------------------------------------------------------------
 // sys
@@ -20,6 +21,71 @@ std::string fs::normalize(const std::string &path)
 {
     // todo test speed with old version
     // todo celero in one header
+//    if (path.empty())
+//        return "";
+
+//    std::string ret;
+//    std::size_t cur = 0;
+//    std::size_t len = path.size();
+
+//    // expand ~ to home directory
+//    if (path[cur++] == '~')
+//    {
+//        ret += fs::home();
+//        ret += fs::sep();
+//    }
+//
+//    std::vector<std::pair<std::size_t, std::size_t>> store;  // segments cache
+//
+//    for (std::size_t i = top.size(), l = path.size(); (i < l) || len; ++i)
+//    {
+//        if ((i == l) || (path[i] == sep))
+//        {
+//            if (len > 0)
+//            {
+//                // store a segment
+//                if (str::equal(&path[ptr], len, "..", 2))
+//                {
+//                    if (!store.empty() && !str::equal(&path[store.back().first], store.back().second, "..", 2))
+//                        store.pop_back();
+//                    else if (!store.empty() || !abs)
+//                        store.emplace_back(std::make_pair(ptr, len));
+//                }
+//                else if (!str::equal(&path[ptr], len, ".", 1))
+//                {
+//                    store.emplace_back(std::make_pair(ptr, len));
+//                }
+//
+//                ptr = len = 0;
+//            }
+//        }
+//        else
+//        {
+//            if (!len)
+//            {
+//                ptr = i;
+//                len = 1;
+//            }
+//            else
+//            {
+//                ++len;
+//            }
+//        }
+//    }
+//
+//    // concat
+//    std::string ret(top);
+//
+//    for (std::size_t i = 0, l = store.size(); i < l; ++i)
+//    {
+//        auto &pair = store[i];
+//        ret.append(&path[pair.first], pair.second);
+//
+//        if (i < l - 1)
+//            ret.append(1, sep);
+//    }
+//
+//    return ret;
 }
 
 std::string fs::dirname(const std::string &path)
@@ -57,4 +123,30 @@ bool fs::isAbsolute(const std::string &path)
 bool fs::isRelative(const std::string &path)
 {
     return !fs::isAbsolute(path);
+}
+
+// -----------------------------------------------------------------------------
+// property
+std::time_t fs::atime(const std::string &path)
+{
+    struct ::stat st{};
+    return !::stat(path.c_str(), &st) ? st.st_atime : 0;
+}
+
+std::time_t fs::mtime(const std::string &path)
+{
+    struct ::stat st{};
+    return !::stat(path.c_str(), &st) ? st.st_mtime : 0;
+}
+
+std::time_t fs::ctime(const std::string &path)
+{
+    struct ::stat st{};
+    return !::stat(path.c_str(), &st) ? st.st_ctime : 0;
+}
+
+std::size_t fs::filesize(const std::string &file)
+{
+    struct ::stat st{};
+    return !::stat(file.c_str(), &st) ? static_cast<std::size_t>(st.st_size) : 0;
 }
