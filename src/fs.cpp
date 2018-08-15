@@ -6,6 +6,7 @@
  */
 #include "fs/fs.hpp"
 #include <sys/stat.h>
+#include <fstream>
 
 // -----------------------------------------------------------------------------
 // sys
@@ -158,6 +159,98 @@ void fs::visit(const std::string &dir,
                bool recursive)
 {
     fs::visit(dir, [&] (const std::string &path, bool *stop) {
+        *stop = false;
         callback(path);
     }, recursive);
+}
+
+// -----------------------------------------------------------------------------
+// IO
+std::string fs::read(const std::string &file)
+{
+    return fs::read(file, 0, fs::filesize(file));
+}
+
+std::string fs::read(const std::string &file, std::streamoff start, std::streamoff length)
+{
+    if (length <= 0)
+        return "";
+
+    std::ifstream in(file, std::ios_base::binary);
+
+    if (start)
+        in.seekg(start);
+
+    if (in && !in.eof())
+    {
+        std::string ret(static_cast<std::size_t>(length), '\0');
+        in.read(&ret[0], static_cast<std::streamsize>(length));
+        ret.resize(static_cast<std::size_t>(in.gcount()));
+
+        return ret;
+    }
+
+    return "";
+}
+
+std::vector<std::string> fs::read(const std::string &file, char delimiter)
+{
+    // todo delimiter unused
+    std::vector<std::string> ret;
+    std::ifstream in(file, std::ios_base::binary);
+    std::string line;
+
+    while (std::getline(in, line))
+        ret.emplace_back(std::move(line));
+
+    return ret;
+}
+
+// write
+fs::status fs::write(const std::string &file, const std::string &data)
+{
+    if (fs::create(fs::dirname(file)))
+        return status(errno);
+
+    std::ofstream out(file, std::ios_base::binary);
+    if (out)
+        out.write(data.data(), data.size());
+
+    return out.good() ? fs::status() : status(errno);
+}
+
+fs::status fs::write(const std::string &file, const void *data, std::size_t size)
+{
+    if (fs::create(fs::dirname(file)))
+        return status(errno);
+
+    std::ofstream out(file, std::ios_base::binary);
+    if (out)
+        out.write(static_cast<const char*>(data), size);
+
+    return out.good() ? fs::status() : status(errno);
+}
+
+fs::status fs::append(const std::string &file, const std::string &data)
+{
+    if (fs::create(fs::dirname(file)))
+        return status(errno);
+
+    std::ofstream out(file, std::ios_base::binary | std::ios_base::app);
+    if (out)
+        out.write(data.data(), data.size());
+
+    return out.good() ? fs::status() : status(errno);
+}
+
+fs::status fs::append(const std::string &file, const void *data, std::size_t size)
+{
+    if (fs::create(fs::dirname(file)))
+        return status(errno);
+
+    std::ofstream out(file, std::ios_base::binary | std::ios_base::app);
+    if (out)
+        out.write(static_cast<const char*>(data), size);
+
+    return out.good() ? fs::status() : status(errno);
 }

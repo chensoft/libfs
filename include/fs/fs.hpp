@@ -226,4 +226,24 @@ namespace fs
     // Collect all items in the directory, exclude '.' and '..'
     std::vector<std::string> collect(const std::string &directory,
                                      bool recursive = true);
+
+    // -------------------------------------------------------------------------
+    // IO
+    // -------------------------------------------------------------------------
+
+    // Read all file contents to a string
+    std::string read(const std::string &file);
+
+    // Read part of file's contents to a string
+    std::string read(const std::string &file, std::streamoff start, std::streamoff length);
+
+    // Read file line by line using delimiter
+    std::vector<std::string> read(const std::string &file, char delimiter);
+
+    // Write data to the file
+    status write(const std::string &file, const std::string &data);
+    status write(const std::string &file, const void *data, std::size_t size);
+
+    status append(const std::string &file, const std::string &data);
+    status append(const std::string &file, const void *data, std::size_t size);
 }
