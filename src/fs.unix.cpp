@@ -121,6 +121,14 @@ bool fs::isExecutable(const std::string &path)
 
 // -----------------------------------------------------------------------------
 // operate
+fs::status fs::change(const std::string &path_new, std::string *path_old)
+{
+    if (path_old)
+        *path_old = fs::cwd();
+
+    return !::chdir(path_new.c_str()) ? fs::status() : fs::status(errno);
+}
+
 fs::status fs::touch(const std::string &file, std::time_t mtime, std::time_t atime)
 {
     // using current time if it's zero
@@ -230,6 +238,60 @@ fs::status fs::remove(const std::string &path)
 
         return ok ? fs::status() : fs::status(errno);
     }
+}
+
+// -----------------------------------------------------------------------------
+// visit
+void fs::visit(const std::string &dir,
+               std::function<void (const std::string &path, bool *stop)> callback,
+               bool recursive)
+{
+    DIR    *ptr = ::opendir(dir.c_str());
+    dirent *cur = nullptr;
+
+    if (!ptr)
+        return;
+
+    try
+    {
+        auto sep  = fs::sep();
+        auto stop = false;
+
+        while ((cur = ::readdir(ptr)))
+        {
+            std::string name(cur->d_name);
+
+            if ((name == ".") || (name == ".."))
+                continue;
+
+            std::string full(dir.back() == sep.front() ? dir + name : dir + sep + name);
+
+            callback(full, &stop);
+            if (stop)
+                break;
+
+            if (recursive && fs::isDir(full))
+                fs::visit(full, callback, recursive);
+        }
+    }
+    catch (...)
+    {
+        ::closedir(ptr);
+        throw;
+    }
+
+    ::closedir(ptr);
+}
+
+std::vector<std::string> fs::collect(const std::string &dir, bool recursive)
+{
+    std::vector<std::string> store;
+
+    fs::visit(dir, [&store] (const std::string &path) {
+        store.emplace_back(path);
+    }, recursive);
+
+    return store;
 }
 
 #endif

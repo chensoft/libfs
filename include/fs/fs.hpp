@@ -7,6 +7,7 @@
 #pragma once
 
 #include <system_error>
+#include <functional>
 #include <string>
 #include <vector>
 #include <ctime>
@@ -185,6 +186,9 @@ namespace fs
     // operate
     // -------------------------------------------------------------------------
 
+    // Change current working directory
+    status change(const std::string &path_new, std::string *path_old = nullptr);
+
     // Set access and modification time of the file, create file and its dir if it's not exist
     // @param file the file to be access or create
     // @param mtime modification time, if zero then use current time
@@ -205,4 +209,21 @@ namespace fs
 
     // Copy a file or directory
     status copy(const std::string &path_old, const std::string &path_new);
+
+    // -------------------------------------------------------------------------
+    // visit
+    // -------------------------------------------------------------------------
+
+    // Visit the directory items use depth-first traversal, exclude '.' and '..'
+    // todo distinct dir vs path vs file
+    void visit(const std::string &dir,
+               std::function<void (const std::string &path)> callback,
+               bool recursive = true);
+    void visit(const std::string &dir,
+               std::function<void (const std::string &path, bool *stop)> callback,
+               bool recursive = true);
+
+    // Collect all items in the directory, exclude '.' and '..'
+    std::vector<std::string> collect(const std::string &directory,
+                                     bool recursive = true);
 }

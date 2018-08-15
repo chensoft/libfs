@@ -150,3 +150,14 @@ std::size_t fs::filesize(const std::string &file)
     struct ::stat st{};
     return !::stat(file.c_str(), &st) ? static_cast<std::size_t>(st.st_size) : 0;
 }
+
+// -----------------------------------------------------------------------------
+// visit
+void fs::visit(const std::string &dir,
+               std::function<void (const std::string &path)> callback,
+               bool recursive)
+{
+    fs::visit(dir, [&] (const std::string &path, bool *stop) {
+        callback(path);
+    }, recursive);
+}
