@@ -209,13 +209,16 @@ namespace fs
     status create(const std::string &dir, std::uint16_t mode = 0, bool recursive = true);
 
     // Rename a file or directory
-    status rename(const std::string &path_old, const std::string &path_new);
+    status rename(const std::string &from, const std::string &to);
 
     // Remove a file or directory
     status remove(const std::string &path);
 
     // Copy a file or directory
-    status copy(const std::string &path_old, const std::string &path_new);
+    status copy(const std::string &from, const std::string &to);
+
+    // Symbol link file or directory
+    status symlink(const std::string &from, const std::string &to);
 
     // -------------------------------------------------------------------------
     // visit
