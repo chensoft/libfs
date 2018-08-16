@@ -56,9 +56,9 @@ std::string fs::cwd()
     return ret ? ret : "";
 }
 
-std::string fs::sep()
+char fs::sep()
 {
-    return "/";
+    return '/';
 }
 
 std::vector<std::string> fs::drives()
@@ -222,7 +222,8 @@ fs::status fs::remove(const std::string &path)
             if ((name == ".") || (name == ".."))
                 continue;
 
-            std::string full(path.back() == sep.front() ? path + name : path + sep + name);
+            // todo optimize
+            std::string full(path.back() == sep ? path + name : path + sep + name);
 
             if (fs::isDir(full))
                 ok = fs::remove(full) && ok;
@@ -264,7 +265,7 @@ void fs::visit(const std::string &dir,
             if ((name == ".") || (name == ".."))
                 continue;
 
-            std::string full(dir.back() == sep.front() ? dir + name : dir + sep + name);
+            std::string full(dir.back() == sep ? dir + name : dir + sep + name);
 
             callback(full, &stop);
             if (stop)

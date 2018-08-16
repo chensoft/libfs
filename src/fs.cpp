@@ -10,10 +10,21 @@
 
 // -----------------------------------------------------------------------------
 // sys
+char fs::sep(const std::string &path)
+{
+    auto pos = path.find_first_of("/\\");
+    return pos != std::string::npos ? path[pos] : fs::sep();
+}
+
 std::string fs::drive(const std::string &path)
 {
-    // todo empty if relative path
-    // todo / if unix otherwise path.substr(0, 3)
+    if (path.empty())
+        return "";
+
+    if (path.front() == '/')
+        return "/";
+
+    return (path.size() >= 3) && std::isalpha(path[0]) && (path[1] == ':') && (path[2] == '\\') ? path.substr(0, 3) : "";
 }
 
 // -----------------------------------------------------------------------------
@@ -22,71 +33,53 @@ std::string fs::normalize(const std::string &path)
 {
     // todo test speed with old version
     // todo celero in one header
-//    if (path.empty())
-//        return "";
+    // todo use ptr == '\0' check string end
+    std::string ret;
 
-//    std::string ret;
-//    std::size_t cur = 0;
-//    std::size_t len = path.size();
+    const char *cur = path.c_str();
+    const char *end = cur;
 
-//    // expand ~ to home directory
-//    if (path[cur++] == '~')
-//    {
-//        ret += fs::home();
-//        ret += fs::sep();
-//    }
-//
-//    std::vector<std::pair<std::size_t, std::size_t>> store;  // segments cache
-//
-//    for (std::size_t i = top.size(), l = path.size(); (i < l) || len; ++i)
-//    {
-//        if ((i == l) || (path[i] == sep))
-//        {
-//            if (len > 0)
-//            {
-//                // store a segment
-//                if (str::equal(&path[ptr], len, "..", 2))
-//                {
-//                    if (!store.empty() && !str::equal(&path[store.back().first], store.back().second, "..", 2))
-//                        store.pop_back();
-//                    else if (!store.empty() || !abs)
-//                        store.emplace_back(std::make_pair(ptr, len));
-//                }
-//                else if (!str::equal(&path[ptr], len, ".", 1))
-//                {
-//                    store.emplace_back(std::make_pair(ptr, len));
-//                }
-//
-//                ptr = len = 0;
-//            }
-//        }
-//        else
-//        {
-//            if (!len)
-//            {
-//                ptr = i;
-//                len = 1;
-//            }
-//            else
-//            {
-//                ++len;
-//            }
-//        }
-//    }
-//
-//    // concat
-//    std::string ret(top);
-//
-//    for (std::size_t i = 0, l = store.size(); i < l; ++i)
-//    {
-//        auto &pair = store[i];
-//        ret.append(&path[pair.first], pair.second);
-//
-//        if (i < l - 1)
-//            ret.append(1, sep);
-//    }
-//
-//    return ret;
+    // expand '~' to home path
+    if ((*cur == '~') && (!*(cur + 1) || (*(cur + 1) == '/') || (*(cur + 1) == '\\')))
+    {
+        ret += fs::home();
+
+        if (*++cur)
+            ret += *cur;
+    }
+
+    for (; *cur; cur = end)
+    {
+        // skip redundant separators
+        while ((*cur == '/') || (*cur == '\\'))
+            ++cur;
+
+        // locate end pointer
+        for (end = cur; *end && (*end != '/') && (*end != '\\'); ++end)
+            ;
+
+        if (end - cur == 0)
+            break;
+
+        // ignore '.'
+        if ((end - cur == 1) && (cur[0] == '.'))
+            continue;
+
+        if ((end - cur == 2) && (cur[0] == '.') && (cur[1] == '.'))
+        {
+            // backtrace if find '..'
+            auto pos = ret.find_last_of("/\\");
+            if (pos != std::string::npos)
+                ret.resize(pos);
+        }
+        else
+        {
+            // add new component
+            ret.append(cur, end);
+        }
+    }
+
+    return ret;
 }
 
 std::string fs::dirname(const std::string &path)
@@ -112,13 +105,7 @@ std::string fs::extname(const std::string &path, bool with_dot)
 // type
 bool fs::isAbsolute(const std::string &path)
 {
-    if (path.empty())
-        return false;
-
-    if (path.front() == '/')
-        return true;
-
-    return (path.size() >= 3) && std::isalpha(path[0]) && (path[1] == ':') && (path[2] == '\\');
+    return !fs::drive(path).empty();
 }
 
 bool fs::isRelative(const std::string &path)

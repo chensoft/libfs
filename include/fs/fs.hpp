@@ -16,7 +16,6 @@ namespace fs
 {
     // -------------------------------------------------------------------------
     // status
-    // todo use in more functions?
     // -------------------------------------------------------------------------
     class status
     {
@@ -47,7 +46,12 @@ namespace fs
 
     // Separator on this platform
     // @result '/' on Unix, '\' on Windows
-    std::string sep();
+    char sep();
+
+    // Separator based on the path
+    // @result '/' or '\' when one of them was first found
+    // @note support both Unix & Windows path on any platform
+    char sep(const std::string &path);
 
     // Get system drives
     // @result "C:\", "D:\" ... on Windows, "/" on Unix
@@ -57,7 +61,7 @@ namespace fs
     // e.g: C:\Windows\System32 -> "C:\"
     // e.g: /usr/local -> "/"
     // e.g: file.txt -> ""
-    // @caution support both Unix & Windows path on any platform
+    // @note support both Unix & Windows path on any platform
     std::string drive(const std::string &path);
 
     // -------------------------------------------------------------------------
@@ -82,8 +86,8 @@ namespace fs
     // e.g: C:\a\...\b -> C:\a\...\b
     // e.g: C:\a\..\..\b -> C:\b
     // e.g: C:\a\..\b -> C:\b
-    // @caution support both Unix & Windows path on any platform
-    std::string normalize(const std::string &path);
+    // @note support both Unix & Windows path on any platform
+    std::string normalize(const std::string &path);  // todo some func's string can not be an constant
 
     // Directory name of the path, without the trailing slash
     // Unix:
@@ -98,7 +102,7 @@ namespace fs
     // e.g: C:\Windows\System32\cmd.exe -> "C:\Windows\System32"
     // e.g: C:\\\ -> C:\
     // e.g: C:\ -> C:\
-    // @caution support both Unix & Windows path on any platform
+    // @note support both Unix & Windows path on any platform
     std::string dirname(const std::string &path);
 
     // Base name of the path, if you provide suffix, it will be removed from result
@@ -110,7 +114,7 @@ namespace fs
     // Windows:
     // e.g: C:\Windows\System32\cmd.exe -> "cmd.exe"
     // e.g: C:\ -> ""
-    // @caution support both Unix & Windows path on any platform
+    // @note support both Unix & Windows path on any platform
     std::string basename(const std::string &path, bool with_ext = true);
 
     // Extension name of the path
@@ -121,7 +125,7 @@ namespace fs
     // Windows:
     // e.g: C:\Windows\System32\cmd.exe -> ".exe"
     // e.g: C:\ -> ""
-    // @caution support both Unix & Windows path on any platform
+    // @note support both Unix & Windows path on any platform
     std::string extname(const std::string &path, bool with_dot = true);
 
     // -------------------------------------------------------------------------
@@ -145,11 +149,11 @@ namespace fs
     // -------------------------------------------------------------------------
 
     // Check if the path is an absolute path
-    // @caution support both Unix & Windows path on any platform
+    // @note support both Unix & Windows path on any platform
     bool isAbsolute(const std::string &path);
 
     // Check if the path is a relative path
-    // @caution support both Unix & Windows path on any platform
+    // @note support both Unix & Windows path on any platform
     bool isRelative(const std::string &path);
 
     // -------------------------------------------------------------------------
