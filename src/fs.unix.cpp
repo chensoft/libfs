@@ -84,6 +84,12 @@ bool fs::isExist(const std::string &path)
     return !::access(path.c_str(), F_OK);
 }
 
+bool fs::isEmpty(const std::string &path)
+{
+    // todo
+    return false;
+}
+
 bool fs::isDir(const std::string &path, bool follow_symlink)
 {
     struct ::stat st{};
@@ -243,9 +249,7 @@ fs::status fs::remove(const std::string &path)
 
 // -----------------------------------------------------------------------------
 // visit
-void fs::visit(const std::string &dir,
-               std::function<void (const std::string &path, bool *stop)> callback,
-               bool recursive)
+void fs::visit(const std::string &dir, std::function<void (const std::string &path, bool *stop)> callback, bool recursive)
 {
     DIR    *ptr = ::opendir(dir.c_str());
     dirent *cur = nullptr;
@@ -284,15 +288,32 @@ void fs::visit(const std::string &dir,
     ::closedir(ptr);
 }
 
+void fs::visit(const std::vector<std::string> &dirs, std::function<void (const std::string &path, bool *stop)> callback, bool recursive)
+{
+    for (auto &dir : dirs)
+        fs::visit(dir, callback, recursive);
+}
+
 std::vector<std::string> fs::collect(const std::string &dir, bool recursive)
 {
-    std::vector<std::string> store;
+    std::vector<std::string> ret;
 
-    fs::visit(dir, [&store] (const std::string &path) {
-        store.emplace_back(path);
+    fs::visit(dir, [&ret] (const std::string &path) {
+        ret.emplace_back(path);
     }, recursive);
 
-    return store;
+    return ret;
+}
+
+std::vector<std::string> fs::collect(const std::vector<std::string> &dirs, bool recursive)
+{
+    std::vector<std::string> ret;
+
+    fs::visit(dirs, [&ret] (const std::string &path) {
+        ret.emplace_back(path);
+    }, recursive);
+
+    return ret;
 }
 
 #endif

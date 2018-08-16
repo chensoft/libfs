@@ -31,14 +31,14 @@ namespace fs
     // sys
     // -------------------------------------------------------------------------
 
-    // Current system drive directory
+    // Retrieve system root drive
     // @result "C:\" on Windows in most cases, "/" on Unix always
     std::string root();
 
-    // Current home directory
+    // Retrieve home directory
     std::string home();
 
-    // Current temp directory
+    // Retrieve temp directory
     std::string tmp();
 
     // Current working directory
@@ -135,6 +135,9 @@ namespace fs
     // Check if the file or directory exist
     bool isExist(const std::string &path);
 
+    // Check if the file or directory has no contents, or not exist
+    bool isEmpty(const std::string &path);
+
     // Check if the path is a directory
     bool isDir(const std::string &path, bool follow_symlink = true);
 
@@ -220,16 +223,15 @@ namespace fs
 
     // Visit the directory items use depth-first traversal, exclude '.' and '..'
     // todo distinct dir vs path vs file
-    void visit(const std::string &dir,
-               std::function<void (const std::string &path)> callback,
-               bool recursive = true);
-    void visit(const std::string &dir,
-               std::function<void (const std::string &path, bool *stop)> callback,
-               bool recursive = true);
+    void visit(const std::string &dir, std::function<void (const std::string &path)> callback, bool recursive = true);
+    void visit(const std::string &dir, std::function<void (const std::string &path, bool *stop)> callback, bool recursive = true);
+
+    void visit(const std::vector<std::string> &dirs, std::function<void (const std::string &path)> callback, bool recursive = true);
+    void visit(const std::vector<std::string> &dirs, std::function<void (const std::string &path, bool *stop)> callback, bool recursive = true);
 
     // Collect all items in the directory, exclude '.' and '..'
-    std::vector<std::string> collect(const std::string &directory,
-                                     bool recursive = true);
+    std::vector<std::string> collect(const std::string &dir, bool recursive = true);
+    std::vector<std::string> collect(const std::vector<std::string> &dirs, bool recursive = true);
 
     // -------------------------------------------------------------------------
     // IO

@@ -141,14 +141,18 @@ std::size_t fs::filesize(const std::string &file)
 
 // -----------------------------------------------------------------------------
 // visit
-void fs::visit(const std::string &dir,
-               std::function<void (const std::string &path)> callback,
-               bool recursive)
+void fs::visit(const std::string &dir, std::function<void (const std::string &path)> callback, bool recursive)
 {
     fs::visit(dir, [&] (const std::string &path, bool *stop) {
         *stop = false;
         callback(path);
     }, recursive);
+}
+
+void fs::visit(const std::vector<std::string> &dirs, std::function<void (const std::string &path)> callback, bool recursive)
+{
+    for (auto &dir : dirs)
+        fs::visit(dir, callback, recursive);
 }
 
 // -----------------------------------------------------------------------------
