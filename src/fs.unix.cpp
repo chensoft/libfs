@@ -72,7 +72,7 @@ std::vector<std::string> fs::drives()
 std::string fs::realpath(const std::string &path)
 {
     char buf[PATH_MAX];
-    auto ret = ::realpath(fs::normalize(path).c_str(), buf);
+    auto ret = ::realpath(fs::normalize(path).c_str(), buf);  // todo do not call realpath, follow symlink by ourself
     return ret ? ret : "";
 }
 
@@ -145,7 +145,7 @@ fs::status fs::touch(const std::string &file, std::time_t mtime, std::time_t ati
         return status;
 
     // create file if not exist
-    // todo created immediately?
+    // todo created immediately? use fopen and fclose
     if (!std::ofstream(file.c_str()))
         return fs::status(errno);
 
