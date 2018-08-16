@@ -189,6 +189,12 @@ namespace fs
     // Get file size
     std::size_t filesize(const std::string &file);
 
+    // Total space about this path's related device
+    std::size_t totalSpace(const std::string &path);
+
+    // Free space about this path's related device
+    std::size_t freeSpace(const std::string &path);
+
     // -------------------------------------------------------------------------
     // operate
     // -------------------------------------------------------------------------
