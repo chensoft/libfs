@@ -8,7 +8,6 @@
 
 #include "fs/fs.hpp"
 #include <fstream>
-#include <cstdlib>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <limits.h>
@@ -46,7 +45,8 @@ std::string fs::home()
 std::string fs::tmp()
 {
     auto env = ::getenv("TMPDIR");
-    return env ? env : "/tmp";
+    auto len = env ? ::strlen(env) : 0;
+    return len ? std::string(env, env[len - 1] == '/' ? len - 1 : len) : "/tmp";
 }
 
 std::string fs::cwd()
@@ -54,6 +54,12 @@ std::string fs::cwd()
     char buf[PATH_MAX];
     auto ret = ::getcwd(buf, sizeof(buf));
     return ret ? ret : "";
+}
+
+std::string fs::rand(std::string pattern)
+{
+    ::mkstemp(&pattern[0]);
+    return pattern;
 }
 
 char fs::sep()
@@ -78,16 +84,46 @@ std::string fs::realpath(const std::string &path)
 
 // -----------------------------------------------------------------------------
 // exist
-bool fs::isExist(const std::string &path)
+bool fs::isExist(const std::string &path, bool follow_symlink)
 {
-    // todo test symlink
-    return !::access(path.c_str(), F_OK);
+    if (follow_symlink)
+        return !::access(path.c_str(), F_OK);
+
+    struct ::stat st{};
+    return !::lstat(path.c_str(), &st);
 }
 
 bool fs::isEmpty(const std::string &path)
 {
-    // todo
-    return false;
+    // treat not exist as empty
+    struct ::stat st{};
+    if (::stat(path.c_str(), &st))
+        return true;
+
+    // check file contents
+    if (S_ISREG(st.st_mode))
+        return !fs::filesize(path);
+
+    // check dir has entries
+    DIR    *dir = ::opendir(path.c_str());
+    dirent *cur = nullptr;
+
+    if (!dir)
+        return false;
+
+    while ((cur = ::readdir(dir)))
+    {
+        if ((cur->d_name[0] == '.') && ((cur->d_name[1] == '\0') || ((cur->d_name[1] == '.') && (cur->d_name[2] == '\0'))))
+            continue;
+
+        ::closedir(dir);
+
+        return false;
+    }
+
+    ::closedir(dir);
+
+    return true;
 }
 
 bool fs::isDir(const std::string &path, bool follow_symlink)
@@ -132,7 +168,7 @@ fs::status fs::change(const std::string &path_new, std::string *path_old)
     if (path_old)
         *path_old = fs::cwd();
 
-    return !::chdir(path_new.c_str()) ? fs::status() : fs::status(errno);
+    return !::chdir(path_new.c_str()) ? status() : status(errno);
 }
 
 fs::status fs::touch(const std::string &file, std::time_t mtime, std::time_t atime)
@@ -146,14 +182,13 @@ fs::status fs::touch(const std::string &file, std::time_t mtime, std::time_t ati
         atime = mtime;
 
     // create directory
-    auto status = fs::create(fs::dirname(file));
-    if (!status)
-        return status;
+    if (!fs::mkdir(fs::dirname(file)))
+        return status(errno);
 
     // create file if not exist
     // todo created immediately? use fopen and fclose
     if (!std::ofstream(file.c_str()))
-        return fs::status(errno);
+        return status(errno);
 
     // modify mtime and atime
     struct ::stat st{};
@@ -165,15 +200,15 @@ fs::status fs::touch(const std::string &file, std::time_t mtime, std::time_t ati
         time.modtime = mtime;
         time.actime  = atime;
 
-        return !::utime(file.c_str(), &time) ? fs::status() : fs::status(errno);
+        return !::utime(file.c_str(), &time) ? status() : status(errno);
     }
     else
     {
-        return fs::status(errno);
+        return status(errno);
     }
 }
 
-fs::status fs::create(const std::string &dir, std::uint16_t mode, bool recursive)
+fs::status fs::mkdir(const std::string &dir, std::uint16_t mode, bool recursive)
 {
     // todo does mode correct?
     if (!mode)
@@ -187,18 +222,18 @@ fs::status fs::create(const std::string &dir, std::uint16_t mode, bool recursive
             auto dirname = fs::dirname(dir);
 
             if (!dirname.empty())
-                success = fs::create(dirname, mode, recursive) && success;
+                success = fs::mkdir(dirname, mode, recursive) && success;
 
-            return !::mkdir(dir.c_str(), mode) && success ? fs::status() : fs::status(errno);
+            return !::mkdir(dir.c_str(), mode) && success ? status() : status(errno);
         }
         else
         {
-            return !::mkdir(dir.c_str(), mode) ? fs::status() : fs::status(errno);
+            return !::mkdir(dir.c_str(), mode) ? status() : status(errno);
         }
     }
     else
     {
-        return fs::status();
+        return status();
     }
 }
 
@@ -206,7 +241,7 @@ fs::status fs::remove(const std::string &path)
 {
     if (fs::isFile(path))
     {
-        return !::remove(path.c_str()) ? fs::status() : fs::status(errno);
+        return !::remove(path.c_str()) ? status() : status(errno);
     }
     else
     {
@@ -214,7 +249,7 @@ fs::status fs::remove(const std::string &path)
         dirent *cur = nullptr;
 
         if (!dir)
-            return fs::status();  // treat file not found as success
+            return status();  // treat file not found as success
 
         auto ok  = true;
         auto sep = fs::sep();
@@ -243,8 +278,13 @@ fs::status fs::remove(const std::string &path)
         if (ok)
             ok = !::rmdir(path.c_str());
 
-        return ok ? fs::status() : fs::status(errno);
+        return ok ? status() : status(errno);
     }
+}
+
+fs::status fs::symlink(const std::string &source, const std::string &target)
+{
+
 }
 
 // -----------------------------------------------------------------------------

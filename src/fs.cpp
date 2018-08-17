@@ -141,6 +141,73 @@ std::size_t fs::filesize(const std::string &file)
 }
 
 // -----------------------------------------------------------------------------
+// operate
+fs::status fs::rename(const std::string &source, const std::string &target)
+{
+    // remove new path if it's already exist
+    if (fs::remove(target))
+        return status(errno);
+
+    // create new directory
+    if (!fs::mkdir(fs::dirname(target)))
+        return status(errno);
+
+    return !::rename(source.c_str(), target.c_str()) ? status() : status(errno);
+}
+
+fs::status fs::copy(const std::string &source, const std::string &target)
+{
+    if (fs::isFile(source))
+    {
+        auto folder = fs::dirname(target);
+        if (folder.empty())
+            return status(EINVAL);
+
+        if (!fs::mkdir(folder))
+            return status();
+
+        std::ifstream in(source, std::ios_base::binary);
+        if (!in)
+            return status();
+
+        std::ofstream out(target, std::ios_base::binary);
+        if (!out)
+            return status();
+
+        out << in.rdbuf();
+        out.close();
+
+        return status();
+    }
+    else if (fs::isDir(source, true))
+    {
+        if (!fs::mkdir(target))
+            return status();
+
+        auto size = source.size();
+        status st;
+
+        fs::visit(source, [size, &st, target] (const std::string &name, bool *stop) {
+            auto sub = name.substr(size, name.size() - size);
+
+            if (fs::isFile(name))
+                st = fs::copy(name, target + sub);
+            else
+                st = fs::mkdir(target + sub, 0, false);
+
+            // exit if occur an error
+            *stop = !!st;
+        });
+
+        return st;
+    }
+    else
+    {
+        return status();
+    }
+}
+
+// -----------------------------------------------------------------------------
 // visit
 void fs::visit(const std::string &dir, std::function<void (const std::string &path)> callback, bool recursive)
 {
@@ -201,48 +268,48 @@ std::vector<std::string> fs::read(const std::string &file, char delimiter)
 // write
 fs::status fs::write(const std::string &file, const std::string &data)
 {
-    if (fs::create(fs::dirname(file)))
+    if (!fs::mkdir(fs::dirname(file)))
         return status(errno);
 
     std::ofstream out(file, std::ios_base::binary);
     if (out)
         out.write(data.data(), data.size());
 
-    return out.good() ? fs::status() : status(errno);
+    return out.good() ? status() : status(errno);
 }
 
 fs::status fs::write(const std::string &file, const void *data, std::size_t size)
 {
-    if (fs::create(fs::dirname(file)))
+    if (!fs::mkdir(fs::dirname(file)))
         return status(errno);
 
     std::ofstream out(file, std::ios_base::binary);
     if (out)
         out.write(static_cast<const char*>(data), size);
 
-    return out.good() ? fs::status() : status(errno);
+    return out.good() ? status() : status(errno);
 }
 
 fs::status fs::append(const std::string &file, const std::string &data)
 {
-    if (fs::create(fs::dirname(file)))
+    if (!fs::mkdir(fs::dirname(file)))
         return status(errno);
 
     std::ofstream out(file, std::ios_base::binary | std::ios_base::app);
     if (out)
         out.write(data.data(), data.size());
 
-    return out.good() ? fs::status() : status(errno);
+    return out.good() ? status() : status(errno);
 }
 
 fs::status fs::append(const std::string &file, const void *data, std::size_t size)
 {
-    if (fs::create(fs::dirname(file)))
+    if (!fs::mkdir(fs::dirname(file)))
         return status(errno);
 
     std::ofstream out(file, std::ios_base::binary | std::ios_base::app);
     if (out)
         out.write(static_cast<const char*>(data), size);
 
-    return out.good() ? fs::status() : status(errno);
+    return out.good() ? status() : status(errno);
 }

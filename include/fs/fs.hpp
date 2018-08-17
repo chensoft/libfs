@@ -44,6 +44,10 @@ namespace fs
     // Current working directory
     std::string cwd();
 
+    // Generate random temp name
+    // @result 'X' in the pattern will be replaced by a random char
+    std::string rand(std::string pattern = "XXXXXX");
+
     // Separator on this platform
     // @result '/' on Unix, '\' on Windows
     char sep();
@@ -133,9 +137,9 @@ namespace fs
     // -------------------------------------------------------------------------
 
     // Check if the file or directory exist
-    bool isExist(const std::string &path);
+    bool isExist(const std::string &path, bool follow_symlink = true);
 
-    // Check if the file or directory has no contents, or not exist
+    // Check if the file or directory has no contents or not exist
     bool isEmpty(const std::string &path);
 
     // Check if the path is a directory
@@ -212,19 +216,21 @@ namespace fs
     // @param mode default mode is rwxr-xr-x
     // @param recursive recursively or not
     // todo how does mode represent on Windows S_IRWXU xxx
-    status create(const std::string &dir, std::uint16_t mode = 0, bool recursive = true);
+    status mkdir(const std::string &dir, std::uint16_t mode = 0, bool recursive = true);
 
     // Rename a file or directory
-    status rename(const std::string &from, const std::string &to);
+    status rename(const std::string &source, const std::string &target);
 
     // Remove a file or directory
     status remove(const std::string &path);
 
     // Copy a file or directory
-    status copy(const std::string &from, const std::string &to);
+    status copy(const std::string &source, const std::string &target);
 
     // Symbol link file or directory
-    status symlink(const std::string &from, const std::string &to);
+    // @param source the original object
+    // @param target the symbolic link
+    status symlink(const std::string &source, const std::string &target);
 
     // -------------------------------------------------------------------------
     // visit
