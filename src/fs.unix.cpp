@@ -7,7 +7,6 @@
 #if defined(__unix__) || defined(__APPLE__)
 
 #include "fs/fs.hpp"
-#include <fstream>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <limits.h>
@@ -181,46 +180,39 @@ fs::status fs::touch(const std::string &file, std::time_t mtime, std::time_t ati
     if (!atime)
         atime = mtime;
 
-    // create directory
-    if (!fs::mkdir(fs::dirname(file)))
-        return status(errno);
+    // create parent directory
+    auto result = fs::mkdir(fs::dirname(file));
+    if (!result)
+        return result;
 
     // create file if not exist
-    // todo created immediately? use fopen and fclose
-    if (!std::ofstream(file.c_str()))
+    auto handle = ::fopen(file.c_str(), "wb");
+    if (!handle)
         return status(errno);
+
+    ::fclose(handle);
 
     // modify mtime and atime
-    struct ::stat st{};
+    ::utimbuf time{};
 
-    if (!::stat(file.c_str(), &st))
-    {
-        ::utimbuf time{};
+    time.modtime = mtime;
+    time.actime  = atime;
 
-        time.modtime = mtime;
-        time.actime  = atime;
-
-        return !::utime(file.c_str(), &time) ? status() : status(errno);
-    }
-    else
-    {
-        return status(errno);
-    }
+    return !::utime(file.c_str(), &time) ? status() : status(errno);
 }
 
 fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
 {
-    // todo call fs::isXXX more strict, consider symbolic link
     auto parent = fs::dirname(dir);
 
-    if (!parent.empty() && !fs::isDir(parent, false))
+    if (!parent.empty() && !fs::isDir(parent, false))  // todo check other call fs::isXXX more strict, consider symbolic link
     {
         auto result = fs::mkdir(parent, mode);
         if (!result)
-            return result;
+            return result;  // todo check others do not return unnecessary status(errno)
     }
 
-    return !::mkdir(dir.c_str(), mode) || (errno == EEXIST) ? status() : status(errno);
+    return dir.empty() || !::mkdir(dir.c_str(), mode) || (errno == EEXIST) ? status() : status(errno);
 }
 
 fs::status fs::remove(const std::string &path)

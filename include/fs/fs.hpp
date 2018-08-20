@@ -215,6 +215,7 @@ namespace fs
 
     // Create a directory
     // @param mode default mode is rwxr-xr-x
+    // @note empty dir will be considered successful
     status mkdir(const std::string &dir, std::uint16_t mode = 0755);
 
     // Rename a file or directory

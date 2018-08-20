@@ -85,6 +85,7 @@ std::string fs::normalize(const std::string &path)
 
 std::string fs::dirname(const std::string &path)
 {
+    // todo how to handle drive 'C:\Windows'
     auto pos = path.find_last_of("/\\");
     return pos != std::string::npos ? path.substr(0, pos) : "";
 }
