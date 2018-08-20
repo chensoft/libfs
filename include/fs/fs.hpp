@@ -108,6 +108,7 @@ namespace fs
     // e.g: "C:\" -> "C:\"
     // @note support both Unix & Windows path on any platform
     std::string dirname(const std::string &path);
+    // todo provide prefix and suffix name
 
     // Base name of the path, if you provide suffix, it will be removed from result
     // Unix:
@@ -214,9 +215,7 @@ namespace fs
 
     // Create a directory
     // @param mode default mode is rwxr-xr-x
-    // @param recursive recursively or not
-    // todo how does mode represent on Windows S_IRWXU xxx
-    status mkdir(const std::string &dir, std::uint16_t mode = 0, bool recursive = true);
+    status mkdir(const std::string &dir, std::uint16_t mode = 0755);
 
     // Rename a file or directory
     status rename(const std::string &source, const std::string &target);

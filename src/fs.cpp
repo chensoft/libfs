@@ -193,7 +193,7 @@ fs::status fs::copy(const std::string &source, const std::string &target)
             if (fs::isFile(name))
                 st = fs::copy(name, target + sub);
             else
-                st = fs::mkdir(target + sub, 0, false);
+                st = fs::mkdir(target + sub);
 
             // exit if occur an error
             *stop = !!st;

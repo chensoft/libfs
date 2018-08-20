@@ -45,7 +45,7 @@ TEST_CASE("fs.unix")
     {
         auto tmp = fs::tmp() + "/" + fs::rand();
 
-//        CHECK(fs::mkdir(tmp));
+        CHECK(fs::mkdir(tmp));
 //        CHECK(fs::touch(tmp + "/file.txt"));
 //        CHECK(fs::symlink(tmp + "/file.txt", tmp + "/link.txt"));
 

@@ -208,33 +208,19 @@ fs::status fs::touch(const std::string &file, std::time_t mtime, std::time_t ati
     }
 }
 
-fs::status fs::mkdir(const std::string &dir, std::uint16_t mode, bool recursive)
+fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
 {
-    // todo does mode correct?
-    if (!mode)
-        mode = S_IRWXU | S_IRWXG | S_IRWXO;
+    // todo call fs::isXXX more strict, consider symbolic link
+    auto parent = fs::dirname(dir);
 
-    if (!fs::isDir(dir))
+    if (!parent.empty() && !fs::isDir(parent, false))
     {
-        if (recursive)
-        {
-            auto success = true;
-            auto dirname = fs::dirname(dir);
-
-            if (!dirname.empty())
-                success = fs::mkdir(dirname, mode, recursive) && success;
-
-            return !::mkdir(dir.c_str(), mode) && success ? status() : status(errno);
-        }
-        else
-        {
-            return !::mkdir(dir.c_str(), mode) ? status() : status(errno);
-        }
+        auto result = fs::mkdir(parent, mode);
+        if (!result)
+            return result;
     }
-    else
-    {
-        return status();
-    }
+
+    return !::mkdir(dir.c_str(), mode) || (errno == EEXIST) ? status() : status(errno);
 }
 
 fs::status fs::remove(const std::string &path)
@@ -284,7 +270,10 @@ fs::status fs::remove(const std::string &path)
 
 fs::status fs::symlink(const std::string &source, const std::string &target)
 {
+    if (!fs::mkdir(fs::dirname(target)))
+        return status(errno);
 
+    return !::link(source.c_str(), target.c_str()) ? status() : status(errno);
 }
 
 // -----------------------------------------------------------------------------
