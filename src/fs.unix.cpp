@@ -9,6 +9,7 @@
 #include "fs/fs.hpp"
 #include <sys/stat.h>
 #include <unistd.h>
+#include <string.h>
 #include <limits.h>
 #include <dirent.h>
 #include <utime.h>
@@ -137,7 +138,7 @@ bool fs::isFile(const std::string &path, bool follow_symlink)
     return (follow_symlink ? !::stat(path.c_str(), &st) : !::lstat(path.c_str(), &st)) && S_ISREG(st.st_mode);
 }
 
-bool fs::isLink(const std::string &path)
+bool fs::isSymlink(const std::string &path)
 {
     struct ::stat st{};
     return !::lstat(path.c_str(), &st) && S_ISLNK(st.st_mode);
@@ -262,10 +263,11 @@ fs::status fs::remove(const std::string &path)
 
 fs::status fs::symlink(const std::string &source, const std::string &target)
 {
-    if (!fs::mkdir(fs::dirname(target)))
-        return status(errno);
+    auto result = fs::mkdir(fs::dirname(target));
+    if (!result)
+        return result;
 
-    return !::link(source.c_str(), target.c_str()) ? status() : status(errno);
+    return !::symlink(source.c_str(), target.c_str()) ? status() : status(errno);
 }
 
 // -----------------------------------------------------------------------------

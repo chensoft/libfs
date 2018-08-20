@@ -140,7 +140,8 @@ namespace fs
     // Check if the file or directory exist
     bool isExist(const std::string &path, bool follow_symlink = true);
 
-    // Check if the file or directory has no contents or not exist
+    // Check if the file has contents or directory has entries
+    // @note non-exist path will be considered empty too
     bool isEmpty(const std::string &path);
 
     // Check if the path is a directory
@@ -150,7 +151,7 @@ namespace fs
     bool isFile(const std::string &path, bool follow_symlink = true);
 
     // Check if the path is a symbolic link
-    bool isLink(const std::string &path);
+    bool isSymlink(const std::string &path);
 
     // -------------------------------------------------------------------------
     // type
