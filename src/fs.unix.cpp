@@ -78,7 +78,9 @@ std::vector<std::string> fs::drives()
 std::string fs::realpath(const std::string &path)
 {
     char buf[PATH_MAX];
-    auto ret = ::realpath(fs::normalize(path).c_str(), buf);  // todo do not call realpath, follow symlink by ourself
+    // todo
+//    auto ret = ::realpath(fs::normalize(path).c_str(), buf);  // todo do not call realpath, follow symlink by ourself
+    auto ret = ::realpath(path.c_str(), buf);  // todo do not call realpath, follow symlink by ourself
     return ret ? ret : "";
 }
 
@@ -159,6 +161,20 @@ bool fs::isWritable(const std::string &path)
 bool fs::isExecutable(const std::string &path)
 {
     return !::access(path.c_str(), X_OK);
+}
+
+// -----------------------------------------------------------------------------
+// property
+std::size_t fs::totalSpace(const std::string &path)
+{
+    // todo
+    return 0;
+}
+
+std::size_t fs::freeSpace(const std::string &path)
+{
+    // todo
+    return 0;
 }
 
 // -----------------------------------------------------------------------------

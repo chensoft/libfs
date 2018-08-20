@@ -14,7 +14,7 @@ TEST_CASE("fs.unix")
     // -------------------------------------------------------------------------
     SECTION("sys")
     {
-        CHECK("/" == fs::root());
+        CHECK(fs::root() == "/");
 
         CHECK(!fs::home().empty());
         CHECK(!::unsetenv("HOME"));
@@ -25,12 +25,12 @@ TEST_CASE("fs.unix")
 
         CHECK(!tmp.empty());
         CHECK(!::unsetenv("TMPDIR"));
-        CHECK("/tmp" == fs::tmp());
+        CHECK(fs::tmp() == "/tmp");
         CHECK(!::setenv("TMPDIR", tmp.c_str(), 1));
 
         CHECK(!fs::cwd().empty());
         CHECK(!fs::rand().empty());
-        CHECK('/' == fs::sep());
+        CHECK(fs::sep() == '/');
         CHECK(!fs::drives().empty());
     }
 
@@ -43,6 +43,7 @@ TEST_CASE("fs.unix")
     // -------------------------------------------------------------------------
     SECTION("exist")
     {
+        // todo can move to test.cpp
         {
             auto tmp = fs::tmp() + "/" + fs::rand();
 
@@ -93,6 +94,14 @@ TEST_CASE("fs.unix")
             CHECK(fs::write(tmp + "/file.txt", "abc"));
             CHECK_FALSE(fs::isEmpty(tmp + "/file.txt"));
         }
+    }
+
+    // -------------------------------------------------------------------------
+    SECTION("mode")
+    {
+        fs::isReadable("/");
+        fs::isWritable("/");
+        fs::isExecutable("/");
     }
 }
 

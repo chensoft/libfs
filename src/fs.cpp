@@ -146,12 +146,14 @@ std::size_t fs::filesize(const std::string &file)
 fs::status fs::rename(const std::string &source, const std::string &target)
 {
     // remove new path if it's already exist
-    if (fs::remove(target))
-        return status(errno);
+    auto result = fs::remove(target);
+    if (!result)
+        return result;
 
     // create new directory
-    if (!fs::mkdir(fs::dirname(target)))
-        return status(errno);
+    result = fs::mkdir(fs::dirname(target));
+    if (!result)
+        return result;
 
     return !::rename(source.c_str(), target.c_str()) ? status() : status(errno);
 }

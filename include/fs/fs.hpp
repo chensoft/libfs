@@ -183,7 +183,6 @@ namespace fs
     // -------------------------------------------------------------------------
 
     // Get file or directory's access time
-    // todo high dpi timestamp?
     std::time_t atime(const std::string &path);
 
     // Get file or directory's modification time
