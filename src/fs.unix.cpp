@@ -14,6 +14,7 @@
 #include <dirent.h>
 #include <utime.h>
 #include <pwd.h>
+#include <queue>
 
 // todo PATH_MAX is not enough, check path greater than PATH_MAX
 // todo handle UNC pathnames
@@ -234,47 +235,23 @@ fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
 
 fs::status fs::remove(const std::string &path)
 {
-    if (fs::isFile(path))
-    {
-        return !::remove(path.c_str()) ? status() : status(errno);
-    }
-    else
-    {
-        DIR    *dir = ::opendir(path.c_str());
-        dirent *cur = nullptr;
+    if (!::remove(path.c_str()) || (errno == ENOENT))
+        return status();
 
-        if (!dir)
-            return status();  // treat file not found as success
+    if (errno != ENOTEMPTY)
+        return status(errno);
 
-        auto ok  = true;
-        auto sep = fs::sep();
+    auto error = 0;
 
-        // todo do not recursive?
-        // remove sub items
-        while ((cur = ::readdir(dir)))
+    fs::visit(path, [&] (const std::string &item, bool *stop) {
+        if (::remove(item.c_str()))
         {
-            std::string name(cur->d_name);
-
-            if ((name == ".") || (name == ".."))
-                continue;
-
-            // todo optimize
-            std::string full(path.back() == sep ? path + name : path + sep + name);
-
-            if (fs::isDir(full))
-                ok = fs::remove(full) && ok;
-            else
-                ok = !::remove(full.c_str()) && ok;
+            *stop = true;
+            error = errno;
         }
+    }, true, VisitStrategy::DeepestFirst);
 
-        ::closedir(dir);
-
-        // remove itself
-        if (ok)
-            ok = !::rmdir(path.c_str());
-
-        return ok ? status() : status(errno);
-    }
+    return !error && ::remove(path.c_str()) ? status(errno) : status(error);
 }
 
 fs::status fs::symlink(const std::string &source, const std::string &target)
@@ -288,69 +265,129 @@ fs::status fs::symlink(const std::string &source, const std::string &target)
 
 // -----------------------------------------------------------------------------
 // visit
-void fs::visit(const std::string &dir, std::function<void (const std::string &path, bool *stop)> callback, bool recursive)
+static void visit_children_first(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive)
 {
-    DIR    *ptr = ::opendir(dir.c_str());
-    dirent *cur = nullptr;
+    auto deleter = [] (DIR *ptr) { ::closedir(ptr); };
+    std::unique_ptr<DIR, decltype(deleter)> ptr(::opendir(dir.c_str()), deleter);
 
     if (!ptr)
         return;
 
-    try
+    dirent *item{};
+    bool    stop{};
+
+    // todo do not recursive?
+    while ((item = ::readdir(ptr.get())))
     {
-        auto sep  = fs::sep();
-        auto stop = false;
+        if (((item->d_name[0] == '.') && !item->d_name[1]) || ((item->d_name[0] == '.') && (item->d_name[1] == '.') && !item->d_name[2]))
+            continue;
 
-        while ((cur = ::readdir(ptr)))
-        {
-            std::string name(cur->d_name);
+        std::string path(dir + fs::sep());
+        path.append(item->d_name, item->d_namlen);
 
-            if ((name == ".") || (name == ".."))
-                continue;
+        callback(path, &stop);
+        if (stop)
+            return;
 
-            std::string full(dir.back() == sep ? dir + name : dir + sep + name);
-
-            callback(full, &stop);
-            if (stop)
-                break;
-
-            if (recursive && fs::isDir(full))
-                fs::visit(full, callback, recursive);
-        }
+        if (recursive && ((item->d_type == DT_DIR) || (item->d_type == DT_UNKNOWN)))
+            fs::visit(path, callback, recursive);
     }
-    catch (...)
-    {
-        ::closedir(ptr);
-        throw;
-    }
-
-    ::closedir(ptr);
 }
 
-void fs::visit(const std::vector<std::string> &dirs, std::function<void (const std::string &path, bool *stop)> callback, bool recursive)
+static bool visit_siblings_first(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive)
 {
-    for (auto &dir : dirs)
-        fs::visit(dir, callback, recursive);
+    dirent *item{};
+    bool    stop{};
+
+    auto deleter = [] (DIR *ptr) { ::closedir(ptr); };
+    std::unique_ptr<DIR, decltype(deleter)> ptr(::opendir(dir.c_str()), deleter);
+
+    if (!ptr)
+        return false;
+
+    std::queue<std::string> queue;
+
+    while ((item = ::readdir(ptr.get())))
+    {
+        if (((item->d_name[0] == '.') && !item->d_name[1]) || ((item->d_name[0] == '.') && (item->d_name[1] == '.') && !item->d_name[2]))
+            continue;
+
+        std::string path(dir + fs::sep());
+        path.append(item->d_name, item->d_namlen);
+
+        callback(path, &stop);
+        if (stop)
+            return true;
+
+        if (recursive && ((item->d_type == DT_DIR) || (item->d_type == DT_UNKNOWN)))
+            queue.emplace(std::move(path));
+    }
+
+    while (!queue.empty())
+    {
+        auto folder = std::move(queue.front());
+        queue.pop();
+
+        if (visit_siblings_first(folder, callback, recursive))
+            return true;
+    }
+
+    return false;
 }
 
-std::vector<std::string> fs::collect(const std::string &dir, bool recursive)
+static void visit_deepest_first(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive)
+{
+    auto deleter = [] (DIR *ptr) { ::closedir(ptr); };
+    std::unique_ptr<DIR, decltype(deleter)> ptr(::opendir(dir.c_str()), deleter);
+
+    if (!ptr)
+        return;
+
+    dirent *item{};
+    bool    stop{};
+
+    while ((item = ::readdir(ptr.get())))
+    {
+        if (((item->d_name[0] == '.') && !item->d_name[1]) || ((item->d_name[0] == '.') && (item->d_name[1] == '.') && !item->d_name[2]))
+            continue;
+
+        std::string path(dir + fs::sep());
+        path.append(item->d_name, item->d_namlen);
+
+        if (recursive && ((item->d_type == DT_DIR) || (item->d_type == DT_UNKNOWN)))
+            fs::visit(path, callback, recursive);
+
+        callback(path, &stop);
+        if (stop)
+            return;
+    }
+}
+
+void fs::visit(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive, VisitStrategy strategy)
+{
+    switch (strategy)
+    {
+        case VisitStrategy::ChildrenFirst:
+            visit_children_first(dir, callback, recursive);
+            break;
+
+        case VisitStrategy::SiblingsFirst:
+            visit_siblings_first(dir, callback, recursive);
+            break;
+
+        case VisitStrategy::DeepestFirst:
+            visit_deepest_first(dir, callback, recursive);
+            break;
+    }
+}
+
+std::vector<std::string> fs::collect(const std::string &dir, bool recursive, VisitStrategy strategy)
 {
     std::vector<std::string> ret;
 
     fs::visit(dir, [&ret] (const std::string &path) {
         ret.emplace_back(path);
-    }, recursive);
-
-    return ret;
-}
-
-std::vector<std::string> fs::collect(const std::vector<std::string> &dirs, bool recursive)
-{
-    std::vector<std::string> ret;
-
-    fs::visit(dirs, [&ret] (const std::string &path) {
-        ret.emplace_back(path);
-    }, recursive);
+    }, recursive, strategy);
 
     return ret;
 }

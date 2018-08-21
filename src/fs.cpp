@@ -145,7 +145,7 @@ std::size_t fs::filesize(const std::string &file)
 // operate
 fs::status fs::rename(const std::string &source, const std::string &target)
 {
-    // remove new path if it's already exist
+    // remove existence path
     auto result = fs::remove(target);
     if (!result)
         return result;
@@ -212,18 +212,12 @@ fs::status fs::copy(const std::string &source, const std::string &target)
 
 // -----------------------------------------------------------------------------
 // visit
-void fs::visit(const std::string &dir, std::function<void (const std::string &path)> callback, bool recursive)
+void fs::visit(const std::string &dir, const std::function<void (const std::string &path)> &callback, bool recursive, VisitStrategy strategy)
 {
     fs::visit(dir, [&] (const std::string &path, bool *stop) {
         *stop = false;
         callback(path);
-    }, recursive);
-}
-
-void fs::visit(const std::vector<std::string> &dirs, std::function<void (const std::string &path)> callback, bool recursive)
-{
-    for (auto &dir : dirs)
-        fs::visit(dir, callback, recursive);
+    }, recursive, strategy);
 }
 
 // -----------------------------------------------------------------------------

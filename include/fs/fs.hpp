@@ -50,7 +50,7 @@ namespace fs
 
     // Separator on this platform
     // @result '/' on Unix, '\' on Windows
-    char sep();
+    char sep();  // todo change to constexpr function
 
     // Separator based on the path
     // @result '/' or '\' when one of them was first found
@@ -141,7 +141,7 @@ namespace fs
     bool isExist(const std::string &path, bool follow_symlink = true);
 
     // Check if the file has contents or directory has entries
-    // @note non-exist path will be considered empty too
+    // @note non-existent path will be considered empty too
     bool isEmpty(const std::string &path);
 
     // Check if the path is a directory
@@ -222,6 +222,7 @@ namespace fs
     status rename(const std::string &source, const std::string &target);
 
     // Remove a file or directory
+    // @note non-existent path will be considered successful
     status remove(const std::string &path);
 
     // Copy a file or directory
@@ -236,17 +237,20 @@ namespace fs
     // visit
     // -------------------------------------------------------------------------
 
-    // Visit the directory items use depth-first traversal, exclude '.' and '..'
     // todo distinct dir vs path vs file
-    void visit(const std::string &dir, std::function<void (const std::string &path)> callback, bool recursive = true);
-    void visit(const std::string &dir, std::function<void (const std::string &path, bool *stop)> callback, bool recursive = true);
+    // Visit the directory items use different traversal methods, exclude '.' and '..'
+    // @e.g: children-first: /usr/bin, /usr/bin/zip, /usr/lib, /usr/lib/libz.a
+    // @e.g: siblings-first: /usr/bin, /usr/lib, /usr/bin/zip, /usr/lib/libz.a
+    // @e.g: deepest-first: /usr/bin/zip, /usr/bin, /usr/lib/libz.a, /usr/lib
+    enum class VisitStrategy { ChildrenFirst, SiblingsFirst, DeepestFirst };
 
-    void visit(const std::vector<std::string> &dirs, std::function<void (const std::string &path)> callback, bool recursive = true);
-    void visit(const std::vector<std::string> &dirs, std::function<void (const std::string &path, bool *stop)> callback, bool recursive = true);
+    void visit(const std::string &dir, const std::function<void (const std::string &path)> &callback, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
+    void visit(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
 
     // Collect all items in the directory, exclude '.' and '..'
-    std::vector<std::string> collect(const std::string &dir, bool recursive = true);
-    std::vector<std::string> collect(const std::vector<std::string> &dirs, bool recursive = true);
+    std::vector<std::string> collect(const std::string &dir, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
+
+    // todo provide find function, search files even by regex, like 'find' utility, support unix glob style * ? [] [!]
 
     // -------------------------------------------------------------------------
     // IO
