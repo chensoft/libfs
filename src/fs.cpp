@@ -214,8 +214,7 @@ fs::status fs::copy(const std::string &source, const std::string &target)
 // visit
 void fs::visit(const std::string &dir, const std::function<void (const std::string &path)> &callback, bool recursive, VisitStrategy strategy)
 {
-    fs::visit(dir, [&] (const std::string &path, bool *stop) {
-        *stop = false;
+    fs::visit(dir, [&] (const std::string &path, bool *) {
         callback(path);
     }, recursive, strategy);
 }

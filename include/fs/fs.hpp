@@ -83,7 +83,7 @@ namespace fs
     // e.g: "./a" -> "a", "a/./b" -> "a/b", "a///b" -> "a/b"
     // e.g: "a/.../b" -> "a/.../b" because the "..." is invalid path characters, it will be ignored
     // e.g: "a/../../b" -> "../b" because the path is relative and second ".." can't be removed
-    // e.g: "/usr/local/etc/.." -> "/usr/local"
+    // e.g: "a/b/.." -> "a"
     // e.g: "/.." -> "/"
     // Windows:
     // e.g: "C:\a" -> "C:\a", "C:\.\a" -> "C:\a"
