@@ -6,6 +6,7 @@
  */
 #include "fs/fs.hpp"
 #include "catch.hpp"
+#include <dirent.h>
 
 TEST_CASE("fs")
 {
@@ -46,11 +47,11 @@ TEST_CASE("fs")
     // -------------------------------------------------------------------------
     SECTION("property")
     {
-        CHECK(fs::atime("/") > 0);
-        CHECK(fs::mtime("/") > 0);
-        CHECK(fs::ctime("/") > 0);
+        CHECK(fs::atime(fs::root()) > 0);
+        CHECK(fs::mtime(fs::root()) > 0);
+        CHECK(fs::ctime(fs::root()) > 0);
 
-        auto tmp = fs::tmp() + "/" + fs::rand();
+        auto tmp = fs::tmp() + fs::sep() + fs::rand();
 
         CHECK(fs::write(tmp + "/file.txt", "abc"));
         CHECK(fs::filesize(tmp + "/file.txt") == 3);
@@ -59,7 +60,7 @@ TEST_CASE("fs")
     // -------------------------------------------------------------------------
     SECTION("operate")
     {
-        auto tmp = fs::realpath(fs::tmp()) + "/" + fs::rand();
+        auto tmp = fs::realpath(fs::tmp()) + fs::sep() + fs::rand();
         auto cwd = fs::cwd();
         auto old = std::string();
 
@@ -76,5 +77,18 @@ TEST_CASE("fs")
         CHECK(fs::rename(tmp + "/dir1", tmp + "/dir2"));
         CHECK(fs::isDir(tmp + "/dir2"));
         CHECK_FALSE(fs::isDir(tmp + "/dir1"));
+
+        CHECK(fs::remove(tmp + fs::sep() + fs::rand()));  // non-existent path is ok
+        CHECK(fs::isDir(tmp + "/dir2"));
+        CHECK(fs::remove(tmp + "/dir2"));
+        CHECK_FALSE(fs::isDir(tmp + "/dir2"));
+
+        CHECK(fs::write(tmp + "/source/a/b/c/file.txt", "abcde"));
+        CHECK(fs::filesize(tmp + "/source/a/b/c/file.txt") == 5);
+        CHECK(fs::copy(tmp + "/source", tmp + "/target"));  // todo need modify
+        CHECK(fs::filesize(tmp + "/target/a/b/c/file.txt") == 5);
+
+        CHECK(fs::symlink(tmp + "/source", tmp + "/link"));
+        CHECK(fs::isSymlink(tmp + "/link"));
     }
 }

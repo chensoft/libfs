@@ -50,7 +50,7 @@ namespace fs
 
     // Separator on this platform
     // @result '/' on Unix, '\' on Windows
-    char sep();  // todo change to constexpr function
+    char sep();
 
     // Separator based on the path
     // @result '/' or '\' when one of them was first found
@@ -216,6 +216,7 @@ namespace fs
     // Create a directory
     // @param mode default mode is rwxr-xr-x
     // @note empty dir will be considered successful
+    // todo check all relative paths
     status mkdir(const std::string &dir, std::uint16_t mode = 0755);
 
     // Rename a file or directory
@@ -226,6 +227,9 @@ namespace fs
     status remove(const std::string &path);
 
     // Copy a file or directory
+    // todo if target exist and is dir then copy source file to target folder
+    // todo if target not exist, treat it as directory or target file path?
+    // todo if source is directory, should copy itself to target
     status copy(const std::string &source, const std::string &target);
 
     // Symbol link file or directory
@@ -244,6 +248,7 @@ namespace fs
     // @e.g: deepest-first: /usr/bin/zip, /usr/bin, /usr/lib/libz.a, /usr/lib
     enum class VisitStrategy { ChildrenFirst, SiblingsFirst, DeepestFirst };
 
+    // todo visit use template and return type F same as the lambda
     void visit(const std::string &dir, const std::function<void (const std::string &path)> &callback, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
     void visit(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
 

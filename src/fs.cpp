@@ -160,53 +160,51 @@ fs::status fs::rename(const std::string &source, const std::string &target)
 
 fs::status fs::copy(const std::string &source, const std::string &target)
 {
-    if (fs::isFile(source))
+    if (fs::isDir(source, false))
     {
-        auto folder = fs::dirname(target);
-        if (folder.empty())
-            return status(EINVAL);
-
-        if (!fs::mkdir(folder))
-            return status();
-
-        std::ifstream in(source, std::ios_base::binary);
-        if (!in)
-            return status();
-
-        std::ofstream out(target, std::ios_base::binary);
-        if (!out)
-            return status();
-
-        out << in.rdbuf();
-        out.close();
-
-        return status();
-    }
-    else if (fs::isDir(source, true))
-    {
-        if (!fs::mkdir(target))
-            return status();
+        auto result = fs::mkdir(target);
+        if (!result)
+            return result;
 
         auto size = source.size();
-        status st;
 
-        fs::visit(source, [size, &st, target] (const std::string &name, bool *stop) {
-            auto sub = name.substr(size, name.size() - size);
+        fs::visit(source, [&] (const std::string &path, bool *stop) {
+            auto sub = path.substr(size, path.size() - size);
 
-            if (fs::isFile(name))
-                st = fs::copy(name, target + sub);
+            if (fs::isFile(path))
+                result = fs::copy(path, target + sub);
             else
-                st = fs::mkdir(target + sub);
+                result = fs::mkdir(target + sub);
 
-            // exit if occur an error
-            *stop = !!st;
+            *stop = !result;
         });
 
-        return st;
+        return result;
     }
     else
     {
-        return status();
+        auto result = fs::mkdir(fs::dirname(target));
+        if (!result)
+            return result;
+
+        auto deleter = [] (FILE *ptr) { ::fclose(ptr); };
+
+        std::unique_ptr<FILE, decltype(deleter)> in(::fopen(source.c_str(), "rb"), deleter);
+        std::unique_ptr<FILE, decltype(deleter)> out(::fopen(target.c_str(), "wb"), deleter);
+
+        if (!in or !out)
+            return status(errno);
+
+        char buf[4096];
+        size_t len = 0;
+
+        while ((len = ::fread(buf, 1, sizeof(buf), in.get())) > 0)
+        {
+            if (::fwrite(buf, 1, len, out.get()) != len)
+                return status(::ferror(out.get()));
+        }
+
+        return status(::ferror(in.get()));
     }
 }
 

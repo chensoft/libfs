@@ -7,6 +7,8 @@
 #if defined(__unix__) || defined(__APPLE__)
 
 #include "fs/fs.hpp"
+#include <memory>
+#include <queue>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
@@ -14,7 +16,6 @@
 #include <dirent.h>
 #include <utime.h>
 #include <pwd.h>
-#include <queue>
 
 // todo PATH_MAX is not enough, check path greater than PATH_MAX
 // todo handle UNC pathnames
@@ -108,25 +109,14 @@ bool fs::isEmpty(const std::string &path)
         return !fs::filesize(path);
 
     // check dir has entries
-    DIR    *dir = ::opendir(path.c_str());
-    dirent *cur = nullptr;
+    bool empty = true;
 
-    if (!dir)
-        return false;
+    fs::visit(path, [&] (const std::string &item, bool *stop) {
+        empty = false;
+        *stop = true;
+    }, false);
 
-    while ((cur = ::readdir(dir)))
-    {
-        if ((cur->d_name[0] == '.') && ((cur->d_name[1] == '\0') || ((cur->d_name[1] == '.') && (cur->d_name[2] == '\0'))))
-            continue;
-
-        ::closedir(dir);
-
-        return false;
-    }
-
-    ::closedir(dir);
-
-    return true;
+    return empty;
 }
 
 bool fs::isDir(const std::string &path, bool follow_symlink)
