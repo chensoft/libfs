@@ -249,10 +249,12 @@ namespace fs
     enum class VisitStrategy { ChildrenFirst, SiblingsFirst, DeepestFirst };
 
     // todo visit use template and return type F same as the lambda
+    // todo visit should return relative path
     void visit(const std::string &dir, const std::function<void (const std::string &path)> &callback, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
     void visit(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
 
     // Collect all items in the directory, exclude '.' and '..'
+    // todo provide parameter return 'absolute' or relative path
     std::vector<std::string> collect(const std::string &dir, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
 
     // todo provide find function, search files even by regex, like 'find' utility, support unix glob style * ? [] [!]

@@ -7,6 +7,7 @@
 #include "fs/fs.hpp"
 #include <sys/stat.h>
 #include <fstream>
+#include <memory>
 #include <cctype>
 
 // -----------------------------------------------------------------------------

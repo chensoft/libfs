@@ -273,7 +273,7 @@ static void visit_children_first(const std::string &dir, const std::function<voi
             continue;
 
         std::string path(dir + fs::sep());
-        path.append(item->d_name, item->d_namlen);
+        path += item->d_name;
 
         callback(path, &stop);
         if (stop)
@@ -303,7 +303,7 @@ static bool visit_siblings_first(const std::string &dir, const std::function<voi
             continue;
 
         std::string path(dir + fs::sep());
-        path.append(item->d_name, item->d_namlen);
+        path += item->d_name;
 
         callback(path, &stop);
         if (stop)
@@ -342,7 +342,7 @@ static void visit_deepest_first(const std::string &dir, const std::function<void
             continue;
 
         std::string path(dir + fs::sep());
-        path.append(item->d_name, item->d_namlen);
+        path += item->d_name;
 
         if (recursive && ((item->d_type == DT_DIR) || (item->d_type == DT_UNKNOWN)))
             fs::visit(path, callback, recursive);
