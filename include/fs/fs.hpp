@@ -108,6 +108,7 @@ namespace fs
     // e.g: "C:\" -> "C:\"
     // @note support both Unix & Windows path on any platform
     std::string dirname(const std::string &path);
+    // todo c has dirname?
     // todo provide prefix and suffix name
 
     // Base name of the path, if you provide suffix, it will be removed from result

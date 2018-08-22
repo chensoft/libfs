@@ -191,6 +191,7 @@ fs::status fs::copy(const std::string &source, const std::string &target)
         auto deleter = [] (FILE *ptr) { ::fclose(ptr); };
 
         // todo use setbuf(f, NULL) disable buffering
+        // todo use mmap, std async
         std::unique_ptr<FILE, decltype(deleter)> in(::fopen(source.c_str(), "rb"), deleter);
         std::unique_ptr<FILE, decltype(deleter)> out(::fopen(target.c_str(), "wb"), deleter);
 
