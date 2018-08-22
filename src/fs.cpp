@@ -190,6 +190,7 @@ fs::status fs::copy(const std::string &source, const std::string &target)
 
         auto deleter = [] (FILE *ptr) { ::fclose(ptr); };
 
+        // todo use setbuf(f, NULL) disable buffering
         std::unique_ptr<FILE, decltype(deleter)> in(::fopen(source.c_str(), "rb"), deleter);
         std::unique_ptr<FILE, decltype(deleter)> out(::fopen(target.c_str(), "wb"), deleter);
 
@@ -226,7 +227,7 @@ std::string fs::read(const std::string &file)
     return fs::read(file, 0, fs::filesize(file));
 }
 
-std::string fs::read(const std::string &file, std::streamoff start, std::streamoff length)
+std::string fs::read(const std::string &file, std::size_t start, std::size_t length)
 {
     if (length <= 0)
         return "";
@@ -238,7 +239,7 @@ std::string fs::read(const std::string &file, std::streamoff start, std::streamo
 
     if (in && !in.eof())
     {
-        std::string ret(static_cast<std::size_t>(length), '\0');
+        std::string ret(length, '\0');
         in.read(&ret[0], static_cast<std::streamsize>(length));
         ret.resize(static_cast<std::size_t>(in.gcount()));
 
@@ -250,12 +251,12 @@ std::string fs::read(const std::string &file, std::streamoff start, std::streamo
 
 std::vector<std::string> fs::read(const std::string &file, char delimiter)
 {
-    // todo delimiter unused
+    // todo use fopen
     std::vector<std::string> ret;
     std::ifstream in(file, std::ios_base::binary);
     std::string line;
 
-    while (std::getline(in, line))
+    while (std::getline(in, line, delimiter))
         ret.emplace_back(std::move(line));
 
     return ret;
@@ -264,14 +265,7 @@ std::vector<std::string> fs::read(const std::string &file, char delimiter)
 // write
 fs::status fs::write(const std::string &file, const std::string &data)
 {
-    if (!fs::mkdir(fs::dirname(file)))
-        return status(errno);
-
-    std::ofstream out(file, std::ios_base::binary);
-    if (out)
-        out.write(data.data(), data.size());
-
-    return out.good() ? status() : status(errno);
+    return fs::write(file, data.data(), data.size());
 }
 
 fs::status fs::write(const std::string &file, const void *data, std::size_t size)
@@ -288,14 +282,7 @@ fs::status fs::write(const std::string &file, const void *data, std::size_t size
 
 fs::status fs::append(const std::string &file, const std::string &data)
 {
-    if (!fs::mkdir(fs::dirname(file)))
-        return status(errno);
-
-    std::ofstream out(file, std::ios_base::binary | std::ios_base::app);
-    if (out)
-        out.write(data.data(), data.size());
-
-    return out.good() ? status() : status(errno);
+    return fs::append(file, data.data(), data.size());
 }
 
 fs::status fs::append(const std::string &file, const void *data, std::size_t size)

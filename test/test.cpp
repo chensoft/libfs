@@ -83,6 +83,7 @@ TEST_CASE("fs")
         CHECK(fs::remove(tmp + "/dir2"));
         CHECK_FALSE(fs::isDir(tmp + "/dir2"));
 
+        // todo test big file copy in release mode
         CHECK(fs::write(tmp + "/source/a/b/c/file.txt", "abcde"));
         CHECK(fs::filesize(tmp + "/source/a/b/c/file.txt") == 5);
         CHECK(fs::copy(tmp + "/source", tmp + "/target"));  // todo need modify
@@ -109,5 +110,21 @@ TEST_CASE("fs")
         CHECK(fs::collect(tmp + "/usr", true, fs::VisitStrategy::ChildrenFirst) == children_first);
         CHECK(fs::collect(tmp + "/usr", true, fs::VisitStrategy::SiblingsFirst) == siblings_first);
         CHECK(fs::collect(tmp + "/usr", true, fs::VisitStrategy::DeepestFirst)  == deepest_first);
+    }
+
+    // -------------------------------------------------------------------------
+    SECTION("io")
+    {
+        auto tmp = fs::tmp() + fs::sep() + fs::rand();
+
+        CHECK(fs::write(tmp + "/file.txt", "abcde"));
+        CHECK(fs::read(tmp + "/file.txt") == "abcde");
+
+        CHECK(fs::append(tmp + "/file.txt", "\n12345"));
+        CHECK(fs::read(tmp + "/file.txt") == "abcde\n12345");
+
+        std::vector<std::string> line_by_line = {"abcde", "12345"};
+
+        CHECK(fs::read(tmp + "/file.txt", '\n') == line_by_line);
     }
 }

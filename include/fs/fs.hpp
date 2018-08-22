@@ -263,11 +263,12 @@ namespace fs
     // IO
     // -------------------------------------------------------------------------
 
+    // todo fstream is too slow, use others
     // Read all file contents to a string
     std::string read(const std::string &file);
 
     // Read part of file's contents to a string
-    std::string read(const std::string &file, std::streamoff start, std::streamoff length);
+    std::string read(const std::string &file, std::size_t start, std::size_t length);
 
     // Read file line by line using delimiter
     std::vector<std::string> read(const std::string &file, char delimiter);
