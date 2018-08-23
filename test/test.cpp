@@ -27,24 +27,32 @@ TEST_CASE("fs")
     // -------------------------------------------------------------------------
     SECTION("path")
     {
-//        CHECK(fs::realpath(fs::cwd()) == fs::cwd());
-//        CHECK(fs::realpath("~") == fs::cwd());
-//
-//        CHECK(fs::normalize("").empty());
-//        CHECK(fs::normalize("./a") == "a");
-//        CHECK(fs::normalize("a/./b") == "a/b");
-//        CHECK(fs::normalize("a///b") == "a/b");
-//        CHECK(fs::normalize("a/.../b") == "a/.../b");  // this is a invalid path
-//        CHECK(fs::normalize("a/../../b") == "../b");   // the second .. don't know how to removed
-//        CHECK(fs::normalize("a/b/..") == "a");
-//        CHECK(fs::normalize("/..") == "/");
-//
-//        CHECK(fs::normalize("C:\\a") == "C:\\a");
-//        CHECK(fs::normalize("C:\\.\\a") == "C:\\a");
-//        CHECK(fs::normalize("C:\\a\\...\\b") == "C:\\a\\...\\b");
-//        CHECK(fs::normalize("C:\\a\\..\\..\\b") == "C:\\b");
-//        CHECK(fs::normalize("C:\\a\\..\\b") == "C:\\b");
-//
+        auto source = fs::tmp() + fs::sep() + fs::rand();  // todo check others do not write multiple file names
+        auto target = fs::tmp() + fs::sep() + fs::rand();
+
+        CHECK(fs::mkdir(source));
+        CHECK(fs::symlink(source, target));
+        CHECK(fs::isSymlink(target));
+        CHECK(fs::realpath(target) == fs::realpath(source));
+        CHECK(fs::realpath("relative") == fs::cwd() + fs::sep() + "relative");
+
+        CHECK(fs::normalize("").empty());
+        CHECK(fs::normalize("~") == fs::home());
+        CHECK(fs::normalize("./a") == "a");
+        CHECK(fs::normalize("a/./b") == "a/b");
+        CHECK(fs::normalize("a///b") == "a/b");
+        CHECK(fs::normalize("a/.../b") == "a/.../b");  // this is a invalid path
+        CHECK(fs::normalize("a/../../b") == "../b");   // the second .. don't know how to removed
+        CHECK(fs::normalize("a/b/..") == "a");
+        CHECK(fs::normalize("a/../b") == "b");
+        CHECK(fs::normalize("/..") == "/");
+
+        CHECK(fs::normalize("C:\\a") == "C:\\a");
+        CHECK(fs::normalize("C:\\.\\a") == "C:\\a");
+        CHECK(fs::normalize("C:\\a\\...\\b") == "C:\\a\\...\\b");
+        CHECK(fs::normalize("C:\\a\\..\\..\\b") == "C:\\b");
+        CHECK(fs::normalize("C:\\a\\..\\b") == "C:\\b");
+
 //        CHECK(fs::dirname("").empty());
 //        CHECK(fs::dirname("/home/staff/Downloads/file.txt") == "/home/staff/Downloads");
 //        CHECK(fs::dirname("/usr/.") == "/usr");

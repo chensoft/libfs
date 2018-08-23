@@ -31,33 +31,35 @@ std::string fs::drive(const std::string &path)
 
 // -----------------------------------------------------------------------------
 // path
-std::string fs::normalize(const std::string &path)
+// todo parameter not use const, modify path in-place
+std::string fs::normalize(std::string path)
 {
     // todo test speed with old version
-    // todo celero in one header
-    // todo use ptr == '\0' check string end
-    std::string ret;
-
-    const char *cur = path.c_str();
-    const char *end = cur;
+    const char sep = fs::sep(path);  // todo forbidden mix windows and unix style
 
     // expand '~' to home path
-    if ((*cur == '~') && (!*(cur + 1) || (*(cur + 1) == '/') || (*(cur + 1) == '\\')))
+    if ((path[0] == '~') && (!path[1] || (path[1] == sep)))
     {
-        ret += fs::home();
-
-        if (*++cur)
-            ret += *cur;
+        path.erase(path.begin());
+        path.insert(0, fs::home());
     }
+
+    std::string ret;
+    std::string drv(fs::drive(path));
+
+    const char *cur = path.c_str() + drv.size();
+    const char *end = nullptr;
+
+    // todo split drive
 
     for (; *cur; cur = end)
     {
         // skip redundant separators
-        while ((*cur == '/') || (*cur == '\\'))
+        while (*cur == sep)
             ++cur;
 
         // locate end pointer
-        for (end = cur; *end && (*end != '/') && (*end != '\\'); ++end)
+        for (end = cur; *end && (*end != sep); ++end)
             ;
 
         if (end - cur == 0)
@@ -67,21 +69,33 @@ std::string fs::normalize(const std::string &path)
         if ((end - cur == 1) && (cur[0] == '.'))
             continue;
 
+        // backtrace if find '..'
         if ((end - cur == 2) && (cur[0] == '.') && (cur[1] == '.'))
         {
-            // backtrace if find '..'
-            auto pos = ret.find_last_of("/\\");
-            if (pos != std::string::npos)
-                ret.resize(pos);
+            if (ret.empty() && !drv.empty())
+                continue;
+
+            if (!ret.empty())
+            {
+                auto pre = ret.find_last_of(sep);
+                auto sub = ret.substr(pre != std::string::npos ? pre : 0);
+
+                if (sub != "..")
+                {
+                    ret.resize(pre != std::string::npos ? pre : 0);
+                    continue;
+                }
+            }
         }
-        else
-        {
-            // add new component
-            ret.append(cur, end);
-        }
+
+        // add new component
+        if (!ret.empty())
+            ret += sep;
+
+        ret.append(cur, end);
     }
 
-    return ret;
+    return drv + ret;  // todo optimize
 }
 
 std::string fs::dirname(const std::string &path)

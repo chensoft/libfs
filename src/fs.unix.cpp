@@ -79,11 +79,13 @@ std::vector<std::string> fs::drives()
 // path
 std::string fs::realpath(const std::string &path)
 {
+    // todo optimize add function visit path's segments
     char buf[PATH_MAX];
-    // todo
-//    auto ret = ::realpath(fs::normalize(path).c_str(), buf);  // todo do not call realpath, follow symlink by ourself
-    auto ret = ::realpath(path.c_str(), buf);  // todo do not call realpath, follow symlink by ourself
-    return ret ? ret : "";
+
+    if (::realpath(path.c_str(), buf))
+        return buf;
+
+    return fs::isRelative(path) ? fs::cwd() + fs::sep() + fs::normalize(path) : fs::normalize(path);
 }
 
 // -----------------------------------------------------------------------------
@@ -156,13 +158,13 @@ bool fs::isExecutable(const std::string &path)
 
 // -----------------------------------------------------------------------------
 // property
-std::size_t fs::totalSpace(const std::string &path)
+std::size_t fs::totalSpace(const std::string &)
 {
     // todo
     return 0;
 }
 
-std::size_t fs::freeSpace(const std::string &path)
+std::size_t fs::freeSpace(const std::string &)
 {
     // todo
     return 0;
@@ -176,6 +178,7 @@ struct ::timespec fs::atime(const std::string &path)
     if (::stat(path.c_str(), &st))
         return {};
 
+    // todo use stat64
 #ifdef __linux__
     return st.st_atim;
 #else

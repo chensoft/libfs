@@ -84,6 +84,7 @@ namespace fs
     // e.g: "./a" -> "a", "a/./b" -> "a/b", "a///b" -> "a/b"
     // e.g: "a/.../b" -> "a/.../b" because the "..." is invalid path characters, it will be ignored
     // e.g: "a/../../b" -> "../b" because the path is relative and second ".." can't be removed
+    // e.g: "a/../b" -> "b"
     // e.g: "a/b/.." -> "a"
     // e.g: "/.." -> "/"
     // Windows:
@@ -92,7 +93,7 @@ namespace fs
     // e.g: "C:\a\..\..\b" -> "C:\b"
     // e.g: "C:\a\..\b" -> "C:\b"
     // @note support both Unix & Windows path on any platform
-    std::string normalize(const std::string &path);  // todo some func's string can not be an constant
+    std::string normalize(std::string path);  // todo some func's string can not be an constant
 
     // Directory name of the path, without the trailing slash
     // Unix:
