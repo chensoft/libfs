@@ -94,14 +94,19 @@ TEST_CASE("fs")
     // -------------------------------------------------------------------------
     SECTION("property")
     {
-        CHECK(fs::atime(fs::root()) > 0);
-        CHECK(fs::mtime(fs::root()) > 0);
-        CHECK(fs::ctime(fs::root()) > 0);
+        auto tmp = fs::tmp() + fs::sep() + fs::rand() + "/file.txt";  // todo check others do not write multiple file names
 
-        auto tmp = fs::tmp() + fs::sep() + fs::rand();
+        CHECK(fs::touch(tmp, 12345678, 0));
+        CHECK(fs::mtime(tmp).tv_sec == 12345678);
+        CHECK(fs::atime(tmp).tv_sec != 12345678);
 
-        CHECK(fs::write(tmp + "/file.txt", "abc"));
-        CHECK(fs::filesize(tmp + "/file.txt") == 3);
+        CHECK(fs::touch(tmp, 12345678, 87654321));
+        CHECK(fs::mtime(tmp).tv_sec == 12345678);
+        CHECK(fs::atime(tmp).tv_sec == 87654321);
+        CHECK(fs::ctime(tmp).tv_sec > 0);
+
+        CHECK(fs::write(tmp, "abc"));
+        CHECK(fs::filesize(tmp) == 3);
     }
 
     // -------------------------------------------------------------------------

@@ -6,6 +6,7 @@
  */
 #pragma once
 
+// todo check all includes
 #include <system_error>
 #include <functional>
 #include <string>
@@ -184,13 +185,13 @@ namespace fs
     // -------------------------------------------------------------------------
 
     // Get file or directory's access time
-    std::time_t atime(const std::string &path);
+    struct ::timespec atime(const std::string &path);
 
     // Get file or directory's modification time
-    std::time_t mtime(const std::string &path);
+    struct ::timespec mtime(const std::string &path);
 
     // Get file or directory's create time
-    std::time_t ctime(const std::string &path);
+    struct ::timespec ctime(const std::string &path);
 
     // Get file size
     std::size_t filesize(const std::string &file);
@@ -211,8 +212,12 @@ namespace fs
     // Set access and modification time of the file, create file and its dir if it's not exist
     // @param file the file to be access or create
     // @param mtime modification time, if zero then use current time
-    // @param atime access time, if zero then use mtime
+    // @param atime access time, if zero then use current time
+    // @note todo check support nanosecond precision on Windows, others only support microsecond precision
+    // todo modify creation time also?
+    // todo touch time parameter order
     status touch(const std::string &file, std::time_t mtime = 0, std::time_t atime = 0);
+    status touch(const std::string &file, struct ::timespec mtime, struct ::timespec atime);
 
     // Create a directory
     // @param mode default mode is rwxr-xr-x

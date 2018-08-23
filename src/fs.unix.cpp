@@ -14,7 +14,7 @@
 #include <string.h>
 #include <limits.h>
 #include <dirent.h>
-#include <utime.h>
+#include <stdio.h>
 #include <pwd.h>
 
 // todo PATH_MAX is not enough, check path greater than PATH_MAX
@@ -180,13 +180,17 @@ fs::status fs::change(const std::string &path_new, std::string *path_old)
 
 fs::status fs::touch(const std::string &file, std::time_t mtime, std::time_t atime)
 {
-    // using current time if it's zero
-    if (!mtime)
-        mtime = ::time(nullptr);
+    return fs::touch(file, {mtime, 0}, {atime, 0});
+}
 
-    // using mtime if atime is zero
-    if (!atime)
-        atime = mtime;
+fs::status fs::touch(const std::string &file, struct ::timespec mtime, struct ::timespec atime)
+{
+    // using current time if it's zero
+    if (!mtime.tv_sec && !mtime.tv_nsec)
+        ::clock_gettime(::CLOCK_REALTIME, &mtime);
+
+    if (!atime.tv_sec && !atime.tv_nsec)
+        ::clock_gettime(::CLOCK_REALTIME, &atime);
 
     // create parent directory
     auto result = fs::mkdir(fs::dirname(file));
@@ -194,19 +198,15 @@ fs::status fs::touch(const std::string &file, std::time_t mtime, std::time_t ati
         return result;
 
     // create file if not exist
-    auto handle = ::fopen(file.c_str(), "wb");
+    auto deleter = [] (FILE *ptr) { ::fclose(ptr); };
+    std::unique_ptr<FILE, decltype(deleter)> handle(::fopen(file.c_str(), "wb"), deleter);
+
     if (!handle)
         return status(errno);
 
-    ::fclose(handle);
-
     // modify mtime and atime
-    ::utimbuf time{};
-
-    time.modtime = mtime;
-    time.actime  = atime;
-
-    return !::utime(file.c_str(), &time) ? status() : status(errno);
+    struct ::timespec times[2] = {atime, mtime};
+    return !::futimens(::fileno(handle.get()), times) ? status() : status(errno);
 }
 
 fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
