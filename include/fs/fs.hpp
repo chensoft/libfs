@@ -97,12 +97,14 @@ namespace fs
 
     // Directory name of the path, without the trailing slash
     // Unix:
-    // e.g: "/home/staff/Downloads/file.txt" -> "/home/staff/Downloads"
+    // e.g: "." -> ""
+    // e.g: "./usr" -> "."
     // e.g: "/usr/." -> "/usr", because "." is represent current directory
     // e.g: "/usr/" -> "/", not "/usr", because single "/" isn't a effective name
     // e.g: "/usr///" -> "/", because the trailing slash will be ignored
     // e.g: "/" -> "/", because it's already the root directory
     // e.g: "file.txt" -> ".", because it's a relative path
+    // e.g: "/home/staff/Downloads/file.txt" -> "/home/staff/Downloads"
     // Windows:
     // e.g: "C:\Windows\System32" -> "C:\Windows"
     // e.g: "C:\Windows\System32\cmd.exe" -> "C:\Windows\System32"
@@ -110,8 +112,6 @@ namespace fs
     // e.g: "C:\" -> "C:\"
     // @note support both Unix & Windows path on any platform
     std::string dirname(const std::string &path);
-    // todo c has dirname?
-    // todo provide prefix and suffix name
 
     // Base name of the path, if you provide suffix, it will be removed from result
     // Unix:

@@ -54,12 +54,14 @@ TEST_CASE("fs")
         CHECK(fs::normalize("C:\\a\\..\\b") == "C:\\b");
 
 //        CHECK(fs::dirname("").empty());
-//        CHECK(fs::dirname("/home/staff/Downloads/file.txt") == "/home/staff/Downloads");
+//        CHECK(fs::dirname(".").empty());
+//        CHECK(fs::dirname("./usr") == ".");
 //        CHECK(fs::dirname("/usr/.") == "/usr");
 //        CHECK(fs::dirname("/usr/") == "/");
 //        CHECK(fs::dirname("/usr///") == "/");
 //        CHECK(fs::dirname("/") == "/");
 //        CHECK(fs::dirname("file.txt") == ".");
+//        CHECK(fs::dirname("/home/staff/Downloads/file.txt") == "/home/staff/Downloads");
 //
 //        CHECK(fs::dirname("C:\\Windows\\System32") == "C:\\Windows");
 //        CHECK(fs::dirname("C:\\Windows\\System32\\cmd.exe") == "C:\\Windows\\System32");
@@ -75,14 +77,14 @@ TEST_CASE("fs")
 //
 //        CHECK(fs::basename("C:\\Windows\\System32\\cmd.exe") == "cmd.exe");
 //        CHECK(fs::basename("C:\\").empty());
-//
-//        CHECK(fs::extname("file.txt", 0).empty());
-//        CHECK(fs::extname("/home/staff/Downloads/file.txt") == ".txt");
-//        CHECK(fs::extname("/home/").empty());
-//        CHECK(fs::extname("/").empty());
-//
-//        CHECK(fs::extname("C:\\Windows\\System32\\cmd.exe") == ".exe");
-//        CHECK(fs::extname("C:\\").empty());
+
+        CHECK(fs::extname("file.txt", false) == "txt");
+        CHECK(fs::extname("/home/staff/Downloads/file.txt") == ".txt");
+        CHECK(fs::extname("/home/").empty());
+        CHECK(fs::extname("/").empty());
+
+        CHECK(fs::extname("C:\\Windows\\System32\\cmd.exe") == ".exe");
+        CHECK(fs::extname("C:\\").empty());
     }
 
     // -------------------------------------------------------------------------
