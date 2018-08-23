@@ -191,6 +191,7 @@ namespace fs
     struct ::timespec mtime(const std::string &path);
 
     // Get file or directory's create time
+    // todo ctime is not create time?
     struct ::timespec ctime(const std::string &path);
 
     // Get file size

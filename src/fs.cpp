@@ -117,32 +117,6 @@ bool fs::isRelative(const std::string &path)
 }
 
 // -----------------------------------------------------------------------------
-// property
-struct ::timespec fs::atime(const std::string &path)
-{
-    struct ::stat st{};
-    return !::stat(path.c_str(), &st) ? st.st_atimespec : ::timespec{};
-}
-
-struct ::timespec fs::mtime(const std::string &path)
-{
-    struct ::stat st{};
-    return !::stat(path.c_str(), &st) ? st.st_mtimespec : ::timespec{};
-}
-
-struct ::timespec fs::ctime(const std::string &path)
-{
-    struct ::stat st{};
-    return !::stat(path.c_str(), &st) ? st.st_ctimespec : ::timespec{};
-}
-
-std::size_t fs::filesize(const std::string &file)
-{
-    struct ::stat st{};
-    return !::stat(file.c_str(), &st) ? static_cast<std::size_t>(st.st_size) : 0;
-}
-
-// -----------------------------------------------------------------------------
 // operate
 fs::status fs::rename(const std::string &source, const std::string &target)
 {

@@ -169,6 +169,53 @@ std::size_t fs::freeSpace(const std::string &path)
 }
 
 // -----------------------------------------------------------------------------
+// property
+struct ::timespec fs::atime(const std::string &path)
+{
+    struct ::stat st{};
+    if (::stat(path.c_str(), &st))
+        return {};
+
+#ifdef __linux__
+    return st.st_atim;
+#else
+    return st.st_atimespec;
+#endif
+}
+
+struct ::timespec fs::mtime(const std::string &path)
+{
+    struct ::stat st{};
+    if (::stat(path.c_str(), &st))
+        return {};
+
+#ifdef __linux__
+    return st.st_mtim;
+#else
+    return st.st_mtimespec;
+#endif
+}
+
+struct ::timespec fs::ctime(const std::string &path)
+{
+    struct ::stat st{};
+    if (::stat(path.c_str(), &st))
+        return {};
+
+#ifdef __linux__
+    return st.st_ctim;
+#else
+    return st.st_ctimespec;
+#endif
+}
+
+std::size_t fs::filesize(const std::string &file)
+{
+    struct ::stat st{};
+    return !::stat(file.c_str(), &st) ? static_cast<std::size_t>(st.st_size) : 0;
+}
+
+// -----------------------------------------------------------------------------
 // operate
 fs::status fs::change(const std::string &path_new, std::string *path_old)
 {
@@ -187,10 +234,10 @@ fs::status fs::touch(const std::string &file, struct ::timespec mtime, struct ::
 {
     // using current time if it's zero
     if (!mtime.tv_sec && !mtime.tv_nsec)
-        ::clock_gettime(::CLOCK_REALTIME, &mtime);
+        ::clock_gettime(CLOCK_REALTIME, &mtime);
 
     if (!atime.tv_sec && !atime.tv_nsec)
-        ::clock_gettime(::CLOCK_REALTIME, &atime);
+        ::clock_gettime(CLOCK_REALTIME, &atime);
 
     // create parent directory
     auto result = fs::mkdir(fs::dirname(file));
