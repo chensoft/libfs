@@ -20,23 +20,23 @@ TEST_CASE("fs")
     // -------------------------------------------------------------------------
     SECTION("sys")
     {
-        CHECK(!fs::cwd().empty());
+        //CHECK(!fs::cwd().empty());
 
-        CHECK(fs::rand("XXXXXX") != "XXXXXX");
-        CHECK(fs::rand("XXXXXX").size() == sizeof("XXXXXX") - 1);
+        //CHECK(fs::rand("XXXXXX") != "XXXXXX");
+        //CHECK(fs::rand("XXXXXX").size() == sizeof("XXXXXX") - 1);
 
-        CHECK(fs::sep());
-        CHECK(fs::sep("bin") == fs::sep());
-        CHECK(fs::sep("/bin") == '/');
-        CHECK(fs::sep("C:\\Windows") == '\\');  // support Windows path on Unix
-        CHECK(fs::sep("Users\\x/Downloads") == '\\');  // mix '\' and '/' is valid on Windows
+        //CHECK(fs::sep());
+        //CHECK(fs::sep("bin") == fs::sep());
+        //CHECK(fs::sep("/bin") == '/');
+        //CHECK(fs::sep("C:\\Windows") == '\\');  // support Windows path on Unix
+        //CHECK(fs::sep("Users\\x/Downloads") == '\\');  // mix '\' and '/' is valid on Windows
 
-        CHECK(!fs::drives().empty());
+        //CHECK(!fs::drives().empty());
 
-        CHECK(fs::drive("C:\\Windows\\System32") == "C:\\");
-        CHECK(fs::drive("/usr/local") == "/");
-        CHECK(fs::drive("file.txt").empty());
-        CHECK(fs::drive("").empty());
+        //CHECK(fs::drive("C:\\Windows\\System32") == "C:\\");
+        //CHECK(fs::drive("/usr/local") == "/");
+        //CHECK(fs::drive("file.txt").empty());
+        //CHECK(fs::drive("").empty());
     }
 
 //    // -------------------------------------------------------------------------

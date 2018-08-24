@@ -9,6 +9,7 @@
 #include <fstream>
 #include <codecvt>
 #include <memory>
+#include <locale>
 #include <cctype>
 
 // -----------------------------------------------------------------------------
@@ -25,25 +26,25 @@ std::string fs::narrow(const std::wstring &str)
     return convert.to_bytes(str);
 }
 
-// -----------------------------------------------------------------------------
-// sys
-char fs::sep(const std::string &path)
-{
-    auto pos = path.find_first_of("/\\");
-    return pos != std::string::npos ? path[pos] : fs::sep();
-}
-
-std::string fs::drive(const std::string &path)
-{
-    if (path.empty())
-        return "";
-
-    if (path.front() == '/')
-        return "/";
-
-    return (path.size() >= 3) && std::isalpha(path[0]) && (path[1] == ':') && (path[2] == '\\') ? path.substr(0, 3) : "";
-}
-
+//// -----------------------------------------------------------------------------
+//// sys
+//char fs::sep(const std::string &path)
+//{
+//    auto pos = path.find_first_of("/\\");
+//    return pos != std::string::npos ? path[pos] : fs::sep();
+//}
+//
+//std::string fs::drive(const std::string &path)
+//{
+//    if (path.empty())
+//        return "";
+//
+//    if (path.front() == '/')
+//        return "/";
+//
+//    return (path.size() >= 3) && std::isalpha(path[0]) && (path[1] == ':') && (path[2] == '\\') ? path.substr(0, 3) : "";
+//}
+//
 //// -----------------------------------------------------------------------------
 //// path
 //// todo parameter not use const, modify path in-place
