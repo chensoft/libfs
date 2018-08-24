@@ -3,6 +3,7 @@
  * @since  2018.08.06
  * @author Jian Chen <admin@chensoft.com>
  * @link   http://chensoft.com
+ * @note   We use utf-8 encoding on all platforms
  */
 #pragma once
 
@@ -26,6 +27,12 @@ namespace fs
         std::error_code error;
     };
 
+    // -------------------------------------------------------------------------
+    // helper
+    // -------------------------------------------------------------------------
+
+    std::wstring widen(const std::string &utf8);
+    std::string narrow(const std::wstring &str);
 
     // -------------------------------------------------------------------------
     // sys

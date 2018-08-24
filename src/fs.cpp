@@ -7,8 +7,23 @@
 #include "fs/fs.hpp"
 #include <sys/stat.h>
 #include <fstream>
+#include <codecvt>
 #include <memory>
 #include <cctype>
+
+// -----------------------------------------------------------------------------
+// helper
+std::wstring fs::widen(const std::string &utf8)
+{
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
+    return convert.from_bytes(utf8);
+}
+
+std::string fs::narrow(const std::wstring &str)
+{
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
+    return convert.to_bytes(str);
+}
 
 // -----------------------------------------------------------------------------
 // sys
