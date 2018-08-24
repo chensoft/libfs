@@ -53,7 +53,7 @@ namespace fs
     char sep();
 
     // Separator based on the path
-    // @result '/' or '\' when one of them was first found
+    // @result '/' or '\' when one of them was first found, if not exist then return sep()
     // @note support both Unix & Windows path on any platform
     char sep(const std::string &path);
 
@@ -136,7 +136,7 @@ namespace fs
     std::string extname(const std::string &path, bool with_dot = true);
 
     // -------------------------------------------------------------------------
-    // exist
+    // check
     // -------------------------------------------------------------------------
 
     // Check if the file or directory exist
@@ -204,7 +204,7 @@ namespace fs
     std::size_t freeSpace(const std::string &path);
 
     // -------------------------------------------------------------------------
-    // operate
+    // operation
     // -------------------------------------------------------------------------
 
     // Change current working directory
@@ -242,7 +242,7 @@ namespace fs
     status symlink(const std::string &source, const std::string &target);
 
     // -------------------------------------------------------------------------
-    // visit
+    // traversal
     // -------------------------------------------------------------------------
 
     // todo distinct dir vs path vs file

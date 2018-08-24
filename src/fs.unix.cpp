@@ -48,15 +48,14 @@ std::string fs::home()
 std::string fs::tmp()
 {
     auto env = ::getenv("TMPDIR");
-    auto len = env ? ::strlen(env) : 0;
+    auto len = ::strlen(env ? env : "");
     return len ? std::string(env, env[len - 1] == '/' ? len - 1 : len) : "/tmp";
 }
 
 std::string fs::cwd()
 {
     char buf[PATH_MAX];
-    auto ret = ::getcwd(buf, sizeof(buf));
-    return ret ? ret : "";
+    return ::getcwd(buf, sizeof(buf)) ? buf : "";
 }
 
 std::string fs::rand(std::string pattern)
@@ -90,7 +89,7 @@ std::string fs::realpath(const std::string &path)
 }
 
 // -----------------------------------------------------------------------------
-// exist
+// check
 bool fs::isExist(const std::string &path, bool follow_symlink)
 {
     if (follow_symlink)
@@ -220,7 +219,7 @@ std::size_t fs::filesize(const std::string &file)
 }
 
 // -----------------------------------------------------------------------------
-// operate
+// operation
 fs::status fs::chdir(const std::string &path_new, std::string *path_old)
 {
     if (path_old)
@@ -300,7 +299,7 @@ fs::status fs::symlink(const std::string &source, const std::string &target)
 }
 
 // -----------------------------------------------------------------------------
-// visit
+// traversal
 static void visit_children_first(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive)
 {
     auto deleter = [] (DIR *ptr) { ::closedir(ptr); };
