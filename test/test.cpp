@@ -6,7 +6,6 @@
  */
 #include "fs/fs.hpp"
 #include "catch.hpp"
-#include <dirent.h>
 
 TEST_CASE("fs")
 {
