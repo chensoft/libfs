@@ -105,16 +105,17 @@ TEST_CASE("fs")
     {
         auto tmp = fs::tmp() + fs::sep() + fs::rand() + "/file.txt";  // todo check others do not write multiple file names
 
-        CHECK(fs::touch(tmp, 12345678, 0));
-        CHECK(fs::mtime(tmp).tv_sec == 12345678);
-        CHECK(fs::atime(tmp).tv_sec != 12345678);
+        CHECK(fs::write(tmp, "abc"));
 
-        CHECK(fs::touch(tmp, 12345678, 87654321));
+        CHECK(fs::touch(tmp, 0, 12345678));
+        CHECK(fs::atime(tmp).tv_sec != 12345678);
         CHECK(fs::mtime(tmp).tv_sec == 12345678);
+
+        CHECK(fs::touch(tmp, 87654321, 12345678));
         CHECK(fs::atime(tmp).tv_sec == 87654321);
+        CHECK(fs::mtime(tmp).tv_sec == 12345678);
         CHECK(fs::ctime(tmp).tv_sec > 0);
 
-        CHECK(fs::write(tmp, "abc"));
         CHECK(fs::filesize(tmp) == 3);
     }
 
@@ -126,7 +127,7 @@ TEST_CASE("fs")
         auto old = std::string();
 
         CHECK(fs::mkdir(tmp));
-        CHECK(fs::change(tmp, &old));
+        CHECK(fs::chdir(tmp, &old));
         CHECK(old == cwd);
         CHECK(fs::cwd() == tmp);
 

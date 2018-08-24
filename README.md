@@ -13,7 +13,7 @@ We tested on the following platforms:
 * Linux (GCC 5+)
 * Windows (Visual Studio 2017+)
 * iOS (Xcode 9+)
-* Android (NDK r16b+, API 21+, CMake 3.9+)
+* Android (NDK r16b+, API 14+, CMake 3.9+)
 
 ## Example
 

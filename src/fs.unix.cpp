@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <utime.h>
 #include <pwd.h>
 
 // todo PATH_MAX is not enough, check path greater than PATH_MAX
@@ -220,7 +221,7 @@ std::size_t fs::filesize(const std::string &file)
 
 // -----------------------------------------------------------------------------
 // operate
-fs::status fs::change(const std::string &path_new, std::string *path_old)
+fs::status fs::chdir(const std::string &path_new, std::string *path_old)
 {
     if (path_old)
         *path_old = fs::cwd();
@@ -228,19 +229,14 @@ fs::status fs::change(const std::string &path_new, std::string *path_old)
     return !::chdir(path_new.c_str()) ? status() : status(errno);
 }
 
-fs::status fs::touch(const std::string &file, std::time_t mtime, std::time_t atime)
-{
-    return fs::touch(file, {mtime, 0}, {atime, 0});
-}
-
-fs::status fs::touch(const std::string &file, struct ::timespec mtime, struct ::timespec atime)
+fs::status fs::touch(const std::string &file, std::time_t atime, std::time_t mtime)
 {
     // using current time if it's zero
-    if (!mtime.tv_sec && !mtime.tv_nsec)
-        ::clock_gettime(CLOCK_REALTIME, &mtime);
+    if (!atime)
+        atime = ::time(nullptr);
 
-    if (!atime.tv_sec && !atime.tv_nsec)
-        ::clock_gettime(CLOCK_REALTIME, &atime);
+    if (!mtime)
+        mtime = ::time(nullptr);
 
     // create parent directory
     auto result = fs::mkdir(fs::dirname(file));
@@ -249,14 +245,14 @@ fs::status fs::touch(const std::string &file, struct ::timespec mtime, struct ::
 
     // create file if not exist
     auto deleter = [] (FILE *ptr) { ::fclose(ptr); };
-    std::unique_ptr<FILE, decltype(deleter)> handle(::fopen(file.c_str(), "wb"), deleter);
+    std::unique_ptr<FILE, decltype(deleter)> handle(::fopen(file.c_str(), "ab+"), deleter);
 
     if (!handle)
         return status(errno);
 
     // modify mtime and atime
-    struct ::timespec times[2] = {atime, mtime};
-    return !::futimens(::fileno(handle.get()), times) ? status() : status(errno);
+    struct ::utimbuf time{atime, mtime};
+    return !::utime(file.c_str(), &time) ? status() : status(errno);
 }
 
 fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)

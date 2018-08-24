@@ -208,17 +208,14 @@ namespace fs
     // -------------------------------------------------------------------------
 
     // Change current working directory
-    status change(const std::string &path_new, std::string *path_old = nullptr);
+    status chdir(const std::string &path_new, std::string *path_old = nullptr);
 
-    // Set access and modification time of the file, create file and its dir if it's not exist
+    // Create file if not exist and change its timestamps
     // @param file the file to be access or create
-    // @param mtime modification time, if zero then use current time
     // @param atime access time, if zero then use current time
-    // @note todo check support nanosecond precision on Windows, others only support microsecond precision
-    // todo modify creation time also?
-    // todo touch time parameter order
-    status touch(const std::string &file, std::time_t mtime = 0, std::time_t atime = 0);
-    status touch(const std::string &file, struct ::timespec mtime, struct ::timespec atime);
+    // @param mtime modification time, if zero then use current time
+    // @note only support second precision now because high precision require newer os
+    status touch(const std::string &file, std::time_t atime = 0, std::time_t mtime = 0);
 
     // Create a directory
     // @param mode default mode is rwxr-xr-x
