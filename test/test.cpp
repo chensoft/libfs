@@ -15,7 +15,7 @@ TEST_CASE("fs")
         CHECK(!fs::cwd().empty());
 
         CHECK(fs::rand("XXXXXX") != "XXXXXX");
-        CHECK(fs::rand("XXXXXX").size() == ::strlen("XXXXXX"));
+        CHECK(fs::rand("XXXXXX").size() == sizeof("XXXXXX") - 1);
 
         CHECK(fs::sep());
         CHECK(fs::sep("bin") == fs::sep());
