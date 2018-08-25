@@ -33,7 +33,7 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/fs DESTINATION include)
 
 # code warnings
 if(UNIX)
-    target_compile_options(fs PUBLIC -Wall -Wextra)
+    target_compile_options(fs PRIVATE -Wall -Wextra)
 endif()
 
 # code coverage
