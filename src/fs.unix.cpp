@@ -213,12 +213,12 @@ std::vector<std::string> fs::drives()
 //
 //// -----------------------------------------------------------------------------
 //// operation
-//fs::status fs::chdir(const std::string &path_new, std::string *path_old)
+//fs::status fs::chdir(const std::string &dir_new, std::string *dir_old)
 //{
-//    if (path_old)
-//        *path_old = fs::cwd();
+//    if (dir_old)
+//        *dir_old = fs::cwd();
 //
-//    return !::chdir(path_new.c_str()) ? status() : status(errno);
+//    return !::chdir(dir_new.c_str()) ? status() : status(errno);
 //}
 //
 //fs::status fs::touch(const std::string &file, std::time_t atime, std::time_t mtime)
@@ -282,13 +282,13 @@ std::vector<std::string> fs::drives()
 //    return !error && ::remove(path.c_str()) ? status(errno) : status(error);
 //}
 //
-//fs::status fs::symlink(const std::string &source, const std::string &target)
+//fs::status fs::symlink(const std::string &path, const std::string &link)
 //{
-//    auto result = fs::mkdir(fs::dirname(target));
+//    auto result = fs::mkdir(fs::dirname(link));
 //    if (!result)
 //        return result;
 //
-//    return !::symlink(source.c_str(), target.c_str()) ? status() : status(errno);
+//    return !::symlink(path.c_str(), link.c_str()) ? status() : status(errno);
 //}
 //
 //// -----------------------------------------------------------------------------

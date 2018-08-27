@@ -77,14 +77,10 @@ std::string fs::drive(const std::string &path)
 //std::string fs::normalize(std::string path)
 //{
 //    // todo test speed with old version
-//    const char sep = fs::sep(path);  // todo forbidden mix windows and unix style
+//    const char sep = fs::sep(path);  // todo allow mix windows and unix style
 //
 //    // expand '~' to home path
-//    if ((path[0] == '~') && (!path[1] || (path[1] == sep)))
-//    {
-//        path.erase(path.begin());
-//        path.insert(0, fs::home());
-//    }
+//    path = std::move(path);
 //
 //    std::string ret;
 //    std::string drv(fs::drive(path));
@@ -139,7 +135,13 @@ std::string fs::drive(const std::string &path)
 //
 //    return drv + ret;  // todo optimize
 //}
-//
+
+std::string fs::expand(std::string path)
+{
+    auto ptr = path.c_str();
+    return (*ptr++ == '~') && ((*ptr == '/') || (*ptr == '\\') || !*ptr) ? path.replace(0, 1, fs::home()), path : path;
+}
+
 //std::string fs::dirname(const std::string &path)
 //{
 //    // todo optimize
@@ -152,7 +154,7 @@ std::string fs::drive(const std::string &path)
 //{
 //    auto pos = path.find_last_of("/\\");
 //    auto ext = !with_ext ? fs::extname(path) : "";
-//    return pos != std::string::npos ? path.substr(pos + 1, !ext.empty() ? path.size() - pos - 1 - ext.size() : std::string::npos) : path;
+//    return pos != std::string::npos ? path.substr(pos + 1, !ext.empty() ? path.size() - pos - 1 - ext.size() : std::string::npos) : path;  // todo use *c_str instead empty
 //}
 //
 //std::string fs::extname(const std::string &path, bool with_dot)
@@ -175,38 +177,38 @@ std::string fs::drive(const std::string &path)
 //
 //// -----------------------------------------------------------------------------
 //// operation
-//fs::status fs::rename(const std::string &source, const std::string &target)
+//fs::status fs::rename(const std::string &path_old, const std::string &path_new)
 //{
 //    // remove existence path
-//    auto result = fs::remove(target);
+//    auto result = fs::remove(path_new);
 //    if (!result)
 //        return result;
 //
 //    // create new directory
-//    result = fs::mkdir(fs::dirname(target));
+//    result = fs::mkdir(fs::dirname(path_new));
 //    if (!result)
 //        return result;
 //
-//    return !::rename(source.c_str(), target.c_str()) ? status() : status(errno);
+//    return !::rename(path_old.c_str(), path_new.c_str()) ? status() : status(errno);
 //}
 //
-//fs::status fs::copy(const std::string &source, const std::string &target)
+//fs::status fs::copy(const std::string &path_old, const std::string &path_new)
 //{
-//    if (fs::isDir(source, false))
+//    if (fs::isDir(path_old, false))
 //    {
-//        auto result = fs::mkdir(target);
+//        auto result = fs::mkdir(path_new);
 //        if (!result)
 //            return result;
 //
-//        auto size = source.size();
+//        auto size = path_old.size();
 //
-//        fs::visit(source, [&] (const std::string &path, bool *stop) {
+//        fs::visit(path_old, [&] (const std::string &path, bool *stop) {
 //            auto sub = path.substr(size, path.size() - size);
 //
 //            if (fs::isFile(path))
-//                result = fs::copy(path, target + sub);
+//                result = fs::copy(path, path_new + sub);
 //            else
-//                result = fs::mkdir(target + sub);
+//                result = fs::mkdir(path_new + sub);
 //
 //            *stop = !result;
 //        });
@@ -215,7 +217,7 @@ std::string fs::drive(const std::string &path)
 //    }
 //    else
 //    {
-//        auto result = fs::mkdir(fs::dirname(target));
+//        auto result = fs::mkdir(fs::dirname(path_new));
 //        if (!result)
 //            return result;
 //
@@ -223,8 +225,8 @@ std::string fs::drive(const std::string &path)
 //
 //        // todo use setbuf(f, NULL) disable buffering
 //        // todo use mmap, std async
-//        std::unique_ptr<FILE, decltype(deleter)> in(::fopen(source.c_str(), "rb"), deleter);
-//        std::unique_ptr<FILE, decltype(deleter)> out(::fopen(target.c_str(), "wb"), deleter);
+//        std::unique_ptr<FILE, decltype(deleter)> in(::fopen(path_old.c_str(), "rb"), deleter);
+//        std::unique_ptr<FILE, decltype(deleter)> out(::fopen(path_new.c_str(), "wb"), deleter);
 //
 //        if (!in or !out)
 //            return status(errno);

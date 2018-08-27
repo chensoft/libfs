@@ -82,7 +82,7 @@ namespace fs
 
     // todo provide expand function, expand ~ and variables if possible
     // Expand all symbolic links, remove ".", ".." and redundant separators
-    // it will treat the beginning '~' as current user's home directory
+    // it will expand the beginning '~' to current home directory
     // it will append relative path to the current working path
     std::string realpath(const std::string &path);
 
@@ -102,6 +102,12 @@ namespace fs
     // e.g: "C:\a\..\b" -> "C:\b"
     // @note support both Unix & Windows path on any platform
     std::string normalize(std::string path);  // todo some func's string can not be an constant
+
+    // Expand ~ to current home directory
+    // todo add test expand ~ == home(), expand ~xxx == ~xxx, expand ~/Users == home()/Users
+    std::string expand(std::string path);
+
+    // todo expand variables
 
     // Directory name of the path, without the trailing slash
     // Unix:
@@ -217,7 +223,7 @@ namespace fs
     // -------------------------------------------------------------------------
 
     // Change current working directory
-    status chdir(const std::string &path_new, std::string *path_old = nullptr);
+    status chdir(const std::string &dir_new, std::string *dir_old = nullptr);
 
     // Create file if not exist and change its timestamps
     // @param file the file to be access or create
@@ -233,7 +239,7 @@ namespace fs
     status mkdir(const std::string &dir, std::uint16_t mode = 0755);
 
     // Rename a file or directory
-    status rename(const std::string &source, const std::string &target);
+    status rename(const std::string &path_old, const std::string &path_new);
 
     // Remove a file or directory
     // @note non-existent path will be considered successful
@@ -243,18 +249,18 @@ namespace fs
     // todo if target exist and is dir then copy source file to target folder
     // todo if target not exist, treat it as directory or target file path?
     // todo if source is directory, should copy itself to target
-    status copy(const std::string &source, const std::string &target);
+    // todo parameter need re-design
+    status copy(const std::string &path_old, const std::string &path_new);
 
     // Symbol link file or directory
-    // @param source the original object
-    // @param target the symbolic link
-    status symlink(const std::string &source, const std::string &target);
+    // @param path the original object
+    // @param link the symbolic link
+    status symlink(const std::string &path, const std::string &link);
 
     // -------------------------------------------------------------------------
     // traversal
     // -------------------------------------------------------------------------
 
-    // todo distinct dir vs path vs file
     // Visit the directory items use different traversal methods, exclude '.' and '..'
     // @e.g: children-first: /usr/bin, /usr/bin/zip, /usr/lib, /usr/lib/libz.a
     // @e.g: siblings-first: /usr/bin, /usr/lib, /usr/bin/zip, /usr/lib/libz.a
