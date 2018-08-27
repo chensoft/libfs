@@ -9,6 +9,7 @@
 #include <fstream>
 #include <codecvt>
 #include <memory>
+#include <random>
 #include <locale>
 #include <cctype>
 
@@ -26,25 +27,46 @@ std::string fs::narrow(const std::wstring &str)
     return convert.to_bytes(str);
 }
 
-//// -----------------------------------------------------------------------------
-//// sys
-//char fs::sep(const std::string &path)
-//{
-//    auto pos = path.find_first_of("/\\");
-//    return pos != std::string::npos ? path[pos] : fs::sep();
-//}
-//
-//std::string fs::drive(const std::string &path)
-//{
-//    if (path.empty())
-//        return "";
-//
-//    if (path.front() == '/')
-//        return "/";
-//
-//    return (path.size() >= 3) && std::isalpha(path[0]) && (path[1] == ':') && (path[2] == '\\') ? path.substr(0, 3) : "";
-//}
-//
+// -----------------------------------------------------------------------------
+// sys
+std::string fs::uuid()
+{
+    std::string pattern("xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx");
+    std::random_device device;
+    auto maxval = (std::random_device::max)();
+
+    for (std::size_t i = 0, len = pattern.size(); i < len; ++i)
+    {
+        auto &c = pattern[i];
+        if ((c != 'x') && (c != 'y'))
+            continue;
+
+        auto r = (int)((double)device() / maxval * 16);
+        auto v = c == 'x' ? r : ((r & 0x03) | 0x08);
+
+        c = v <= 9 ? '0' + v : 'A' - 10 + v;
+    }
+
+    return pattern;
+}
+
+char fs::sep(const std::string &path)
+{
+    auto pos = path.find_first_of("/\\");
+    return pos != std::string::npos ? path[pos] : fs::sep();
+}
+
+std::string fs::drive(const std::string &path)
+{
+    if (path.empty())
+        return "";
+
+    if (path.front() == '/')
+        return "/";
+
+    return (path.size() >= 3) && std::isalpha(path[0]) && (path[1] == ':') && (path[2] == '\\') ? path.substr(0, 3) : "";
+}
+
 //// -----------------------------------------------------------------------------
 //// path
 //// todo parameter not use const, modify path in-place

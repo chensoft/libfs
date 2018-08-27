@@ -5,4 +5,12 @@
  * @link   http://chensoft.com
  */
 #ifdef _WIN32
+
+#include "fs/fs.hpp"
+#include "catch.hpp"
+
+TEST_CASE("fs.win")
+{
+}
+
 #endif

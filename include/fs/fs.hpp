@@ -38,6 +38,7 @@ namespace fs
     // sys
     // -------------------------------------------------------------------------
 
+    // todo return path add sep in tail
     // Retrieve system root drive
     // @result "C:\" on Windows in most cases, "/" on Unix always
     std::string root();
@@ -51,9 +52,8 @@ namespace fs
     // Current working directory
     std::string cwd();
 
-    // Generate random temp name
-    // @result 'X' in the pattern will be replaced by a random char
-    std::string rand(std::string pattern = "XXXXXX");
+    // Generate a uuid string
+    std::string uuid();
 
     // Separator on this platform
     // @result '/' on Unix, '\' on Windows
@@ -64,6 +64,7 @@ namespace fs
     // @note support both Unix & Windows path on any platform
     char sep(const std::string &path);
 
+    // todo change meaning
     // Get system drives
     // @result "C:\", "D:\" ... on Windows, "/" on Unix
     std::vector<std::string> drives();
@@ -72,6 +73,7 @@ namespace fs
     // e.g: "C:\Windows\System32" -> "C:\"
     // e.g: "/usr/local" -> "/"
     // e.g: "file.txt" -> ""
+    // e.g: "" -> ""
     // @note support both Unix & Windows path on any platform
     std::string drive(const std::string &path);
 
@@ -79,6 +81,7 @@ namespace fs
     // path
     // -------------------------------------------------------------------------
 
+    // todo provide expand function, expand ~ and variables if possible
     // Expand all symbolic links, remove ".", ".." and redundant separators
     // it will treat the beginning '~' as current user's home directory
     // it will append relative path to the current working path

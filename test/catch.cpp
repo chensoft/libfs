@@ -11,5 +11,6 @@
 
 int main(int argc, char *argv[])
 {
-    return Catch::Session().run(argc, argv);
+    Catch::Session().run(argc, argv);
+	::system("pause");
 }

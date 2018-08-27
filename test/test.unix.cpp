@@ -30,17 +30,11 @@ TEST_CASE("fs.unix")
     }
 
 //    // -------------------------------------------------------------------------
-//    SECTION("path")
-//    {
-//
-//    }
-//
-//    // -------------------------------------------------------------------------
 //    SECTION("check")
 //    {
 //        // todo can move to test.cpp
 //        {
-//            auto tmp = fs::tmp() + "/" + fs::rand();
+//            auto tmp = fs::tmp() + "/" + fs::uuid();
 //
 //            CHECK(fs::mkdir(tmp));
 //            CHECK(fs::mkdir(tmp + "/folder"));
@@ -78,7 +72,7 @@ TEST_CASE("fs.unix")
 //        }
 //
 //        {
-//            auto tmp = fs::tmp() + "/" + fs::rand();
+//            auto tmp = fs::tmp() + "/" + fs::uuid();
 //
 //            CHECK(fs::isEmpty(tmp));  // path is not exist now
 //            CHECK(fs::mkdir(tmp));

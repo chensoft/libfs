@@ -58,12 +58,6 @@ std::string fs::cwd()
     return ::getcwd(buf, sizeof(buf)) ? buf : "";
 }
 
-std::string fs::rand(std::string pattern)
-{
-    ::mkstemp(&pattern[0]);
-    return pattern;
-}
-
 char fs::sep()
 {
     return '/';
