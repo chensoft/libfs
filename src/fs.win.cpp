@@ -13,7 +13,7 @@
 #pragma comment(lib, "userenv.lib")
 
 // -----------------------------------------------------------------------------
-// sys
+// path
 std::string fs::root()
 {
     wchar_t buf[MAX_PATH]{};
@@ -32,19 +32,19 @@ std::string fs::home()
 
     ::CloseHandle(token);
 
-    return ret ? fs::narrow(buf) : "";
+    return ret ? fs::prune(fs::narrow(buf)) : "";
 }
 
 std::string fs::tmp()
 {
     wchar_t buf[MAX_PATH]{};
-    return ::GetTempPathW(_countof(buf), buf) ? fs::narrow(buf) : "";
+    return ::GetTempPathW(_countof(buf), buf) ? fs::prune(fs::narrow(buf)) : "";
 }
 
 std::string fs::cwd()
 {
     wchar_t buf[MAX_PATH]{};
-    return ::GetCurrentDirectoryW(_countof(buf), buf) ? fs::narrow(buf) : "";
+    return ::GetCurrentDirectoryW(_countof(buf), buf) ? fs::prune(fs::narrow(buf)) : "";
 }
 
 char fs::sep()
@@ -58,10 +58,10 @@ std::vector<std::string> fs::drives()
 
     DWORD bits = ::GetLogicalDrives();
 
-    for (auto i = 0; i < 26; ++i)  // a to z
+    for (auto i = 0; i < 26; ++i)  // A to Z
     {
         if (bits & (1 << i))
-            ret.emplace_back(std::string(1, ('A' + i)) + ":\\");  // todo remove slash
+            ret.emplace_back(1, 'A' + i);
     }
 
     return ret;

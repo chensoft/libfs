@@ -27,24 +27,28 @@ std::string fs::narrow(const std::wstring &str)
     return convert.to_bytes(str);
 }
 
+std::string fs::prune(std::string dir)
+{
+    return !dir.empty() && ((dir.back() == '/') || (dir.back() == '\\')) ? dir.erase(dir.end() - 1), dir : dir;
+}
+
 // -----------------------------------------------------------------------------
-// sys
+// path
 std::string fs::uuid()
 {
     std::string pattern("xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx");
     std::random_device device;
-    auto maxval = (std::random_device::max)();
+    auto threshold = (std::random_device::max)();
 
-    for (std::size_t i = 0, len = pattern.size(); i < len; ++i)
+    for (auto &c : pattern)
     {
-        auto &c = pattern[i];
-        if ((c != 'x') && (c != 'y'))
+        if ((c == '-') || (c == '4'))
             continue;
 
-        auto r = (int)((double)device() / maxval * 16);
+        auto r = static_cast<int>((double)device() / threshold * 16);
         auto v = c == 'x' ? r : ((r & 0x03) | 0x08);
 
-        c = v <= 9 ? '0' + v : 'A' - 10 + v;
+        c = static_cast<char>(v <= 9 ? '0' + v : 'A' - 10 + v);
     }
 
     return pattern;
@@ -64,11 +68,11 @@ std::string fs::drive(const std::string &path)
     if (path.front() == '/')
         return "/";
 
-    return (path.size() >= 3) && std::isalpha(path[0]) && (path[1] == ':') && (path[2] == '\\') ? path.substr(0, 3) : "";
+    return (path.size() >= 3) && std::isalpha(path[0]) && (path[1] == ':') && (path[2] == '\\') ? path.substr(0, 1) : "";
 }
 
 //// -----------------------------------------------------------------------------
-//// path
+//// split
 //// todo parameter not use const, modify path in-place
 //std::string fs::normalize(std::string path)
 //{

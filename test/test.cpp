@@ -18,12 +18,12 @@ TEST_CASE("fs")
     }
 
     // -------------------------------------------------------------------------
-    SECTION("sys")
+    SECTION("path")
     {
         CHECK(!fs::root().empty());
-        CHECK(!fs::home().empty());
-        CHECK(!fs::tmp().empty());
-        CHECK(!fs::cwd().empty());
+        CHECK(fs::home().back() != fs::sep());
+        CHECK(fs::tmp().back() != fs::sep());
+        CHECK(fs::cwd().back() != fs::sep());
         CHECK(!fs::uuid().empty());
 
         CHECK(fs::sep());
@@ -34,14 +34,14 @@ TEST_CASE("fs")
 
         CHECK(!fs::drives().empty());
 
-        CHECK(fs::drive("C:\\Windows\\System32") == "C:\\");
+        CHECK(fs::drive("C:\\Windows\\System32") == "C");
         CHECK(fs::drive("/usr/local") == "/");
         CHECK(fs::drive("file.txt").empty());
         CHECK(fs::drive("").empty());
     }
 
     //    // -------------------------------------------------------------------------
-    //    SECTION("path")
+    //    SECTION("split")
     //    {
     //        auto source = fs::tmp() + fs::sep() + fs::uuid();  // todo check others do not write multiple file names
     //        auto target = fs::tmp() + fs::sep() + fs::uuid();

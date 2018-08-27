@@ -22,7 +22,7 @@
 // todo handle UNC pathnames
 
 // -----------------------------------------------------------------------------
-// sys
+// path
 std::string fs::root()
 {
     return "/";
@@ -33,7 +33,7 @@ std::string fs::home()
     // check env first
     auto env = ::getenv("HOME");
     if (env)
-        return env;
+        return fs::prune(env);
 
     // check passwd file
     struct ::passwd  pwd = {};
@@ -42,20 +42,19 @@ std::string fs::home()
     char buf[std::max(1024l, ::sysconf(_SC_GETPW_R_SIZE_MAX))];
     ::getpwuid_r(::getuid(), &pwd, buf, sizeof(buf), &ret);
 
-    return ret ? pwd.pw_dir : "";
+    return ret ? fs::prune(pwd.pw_dir) : "";
 }
 
 std::string fs::tmp()
 {
     auto env = ::getenv("TMPDIR");
-    auto len = ::strlen(env ? env : "");
-    return len ? std::string(env, env[len - 1] == '/' ? len - 1 : len) : "/tmp";
+    return env ? fs::prune(env) : "/tmp";
 }
 
 std::string fs::cwd()
 {
     char buf[PATH_MAX];
-    return ::getcwd(buf, sizeof(buf)) ? buf : "";
+    return ::getcwd(buf, sizeof(buf)) ? fs::prune(buf) : "";
 }
 
 char fs::sep()
@@ -70,7 +69,7 @@ std::vector<std::string> fs::drives()
 }
 
 //// -----------------------------------------------------------------------------
-//// path
+//// split
 //std::string fs::realpath(const std::string &path)
 //{
 //    // todo optimize add function visit path's segments

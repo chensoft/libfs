@@ -33,23 +33,23 @@ namespace fs
 
     std::wstring widen(const std::string &utf8);
     std::string narrow(const std::wstring &str);
+    std::string prune(std::string dir);
 
     // -------------------------------------------------------------------------
-    // sys
+    // path
     // -------------------------------------------------------------------------
 
-    // todo return path add sep in tail
-    // Retrieve system root drive
-    // @result "C:\" on Windows in most cases, "/" on Unix always
+    // Retrieve system root path
+    // @result "/" on Unix always, "C:\" on Windows in most cases
     std::string root();
 
-    // Retrieve home directory
+    // Retrieve home directory, no separator at the end
     std::string home();
 
-    // Retrieve temp directory
+    // Retrieve temp directory, no separator at the end
     std::string tmp();
 
-    // Current working directory
+    // Current working directory, no separator at the end
     std::string cwd();
 
     // Generate a uuid string
@@ -64,13 +64,12 @@ namespace fs
     // @note support both Unix & Windows path on any platform
     char sep(const std::string &path);
 
-    // todo change meaning
-    // Get system drives
-    // @result "C:\", "D:\" ... on Windows, "/" on Unix
+    // Get mount points or system drives
+    // @result "/" on Unix, "C", "D" ... on Windows
     std::vector<std::string> drives();
 
-    // Get path's drive
-    // e.g: "C:\Windows\System32" -> "C:\"
+    // Get path's mount point or drive
+    // e.g: "C:\Windows\System32" -> "C"
     // e.g: "/usr/local" -> "/"
     // e.g: "file.txt" -> ""
     // e.g: "" -> ""
@@ -78,7 +77,7 @@ namespace fs
     std::string drive(const std::string &path);
 
     // -------------------------------------------------------------------------
-    // path
+    // split
     // -------------------------------------------------------------------------
 
     // todo provide expand function, expand ~ and variables if possible
