@@ -15,10 +15,14 @@ TEST_CASE("fs")
         CHECK(std::string(u8"\u9648\u5251") == "\xE9\x99\x88\xE5\x89\x91");
         CHECK(fs::widen(u8"\u9648\u5251") == L"\u9648\u5251");
         CHECK(fs::narrow(L"\u9648\u5251") == "\xE9\x99\x88\xE5\x89\x91");
+
+        CHECK(fs::prune("/usr/local//") == "/usr/local");
         CHECK(fs::prune("/usr/local/") == "/usr/local");
         CHECK(fs::prune("/usr/local") == "/usr/local");
+        CHECK(fs::prune("C:\\Windows\\\\") == "C:\\Windows");
         CHECK(fs::prune("C:\\Windows\\") == "C:\\Windows");
         CHECK(fs::prune("C:\\Windows") == "C:\\Windows");
+        CHECK(fs::prune("").empty());
     }
 
     // -------------------------------------------------------------------------

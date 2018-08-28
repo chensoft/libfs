@@ -31,8 +31,13 @@ namespace fs
     // helper
     // -------------------------------------------------------------------------
 
+    // UTF-8 to UTF-16
     std::wstring widen(const std::string &utf8);
+
+    // UTF-16 to UTF-8
     std::string narrow(const std::wstring &str);
+
+    // Remove the separator at the end
     std::string prune(std::string dir);
 
     // -------------------------------------------------------------------------

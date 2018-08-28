@@ -29,7 +29,13 @@ std::string fs::narrow(const std::wstring &str)
 
 std::string fs::prune(std::string dir)
 {
-    return !dir.empty() && ((dir.back() == '/') || (dir.back() == '\\')) ? dir.erase(dir.end() - 1), dir : dir;
+    auto beg = dir.c_str();
+    auto ptr = beg + dir.size() - 1;
+
+    while ((ptr >= beg) && ((*ptr == '/') || (*ptr == '\\')))
+        --ptr;
+
+    return dir.resize(ptr - beg + 1), dir;
 }
 
 // -----------------------------------------------------------------------------
