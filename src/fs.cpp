@@ -17,14 +17,12 @@
 // helper
 std::wstring fs::widen(const std::string &utf8)
 {
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
-    return convert.from_bytes(utf8);
+    return std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().from_bytes(utf8);
 }
 
-std::string fs::narrow(const std::wstring &str)
+std::string fs::narrow(const std::wstring &utf16)
 {
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
-    return convert.to_bytes(str);
+    return std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().to_bytes(utf16);
 }
 
 std::string fs::prune(std::string dir)
@@ -66,6 +64,11 @@ char fs::sep(const std::string &path)
     return pos != std::string::npos ? path[pos] : fs::sep();
 }
 
+std::string fs::seps()
+{
+    return "/\\";
+}
+
 std::string fs::drive(const std::string &path)
 {
     if (path.empty())
@@ -77,75 +80,68 @@ std::string fs::drive(const std::string &path)
     return (path.size() >= 3) && std::isalpha(path[0]) && (path[1] == ':') && (path[2] == '\\') ? path.substr(0, 1) : "";
 }
 
-//// -----------------------------------------------------------------------------
-//// split
-//// todo parameter not use const, modify path in-place
-//std::string fs::normalize(std::string path)
-//{
-//    // todo test speed with old version
-//    const char sep = fs::sep(path);  // todo allow mix windows and unix style
+// -----------------------------------------------------------------------------
+// split
+std::string fs::normalize(std::string path)
+{
+    // todo test speed with old version
+    // todo allow mix windows and unix style
+    auto ret = std::string();
+//    auto tok = fs::tokenize(fs::expand(std::move(path)));
 //
-//    // expand '~' to home path
-//    path = std::move(path);
-//
-//    std::string ret;
-//    std::string drv(fs::drive(path));
-//
-//    const char *cur = path.c_str() + drv.size();
-//    const char *end = nullptr;
-//
-//    // todo split drive
-//
-//    for (; *cur; cur = end)
+//    for (auto it = tok.begin(); it != tok.end(); ++it)
 //    {
-//        // skip redundant separators
-//        while (*cur == sep)
-//            ++cur;
-//
-//        // locate end pointer
-//        for (end = cur; *end && (*end != sep); ++end)
-//            ;
-//
-//        if (end - cur == 0)
-//            break;
-//
-//        // ignore '.'
-//        if ((end - cur == 1) && (cur[0] == '.'))
+//        // ignore "."
+//        if (it->second == ".")
 //            continue;
 //
-//        // backtrace if find '..'
-//        if ((end - cur == 2) && (cur[0] == '.') && (cur[1] == '.'))
+//        // backtrace ".."
+//        if (it->second == "..")
 //        {
-//            if (ret.empty() && !drv.empty())
-//                continue;
-//
-//            if (!ret.empty())
-//            {
-//                auto pre = ret.find_last_of(sep);
-//                auto sub = ret.substr(pre != std::string::npos ? pre : 0);
-//
-//                if (sub != "..")
-//                {
-//                    ret.resize(pre != std::string::npos ? pre : 0);
-//                    continue;
-//                }
-//            }
+//            auto pos = ret.find_last_of(fs::seps());
+//            ret.resize(pos == std::string::npos ? 0 : (std::max)((decltype(pos))1, pos));  // preserve first '/'
+//            continue;
 //        }
 //
-//        // add new component
-//        if (!ret.empty())
-//            ret += sep;
-//
-//        ret.append(cur, end);
+//        ret += it->first;
+//        ret += it->second;
 //    }
-//
-//    return drv + ret;  // todo optimize
-//}
+
+    return ret;
+}
 
 std::string fs::expand(std::string path)
 {
     auto ptr = path.c_str();
     return (*ptr++ == '~') && ((*ptr == '/') || (*ptr == '\\') || !*ptr) ? path.replace(0, 1, fs::home()), path : path;
+}
+
+std::vector<std::pair<std::string, std::string>> fs::tokenize(const std::string &path, const std::string &seps)
+{
+    std::vector<std::pair<std::string, std::string>> ret;
+
+    const char *beg = path.c_str();
+    const char *end = nullptr;
+    const char *cur = beg;
+
+    for (; *cur; cur = end)
+    {
+        // skip redundant separators
+        while (seps.find(*cur) != std::string::npos)
+            ++cur;
+
+        // locate end pointer
+        for (end = cur; *end && (seps.find(*end) == std::string::npos); ++end)
+            ;
+
+        if (end - cur == 0 && cur - beg > 1)
+            break;
+
+        // add new component
+        ret.emplace_back(std::piecewise_construct, std::forward_as_tuple(cur == beg ? cur : cur - 1, cur), std::forward_as_tuple(cur, end));
+    }
+
+    return ret;
 }
 
 //std::string fs::dirname(const std::string &path)
@@ -288,14 +284,14 @@ std::string fs::expand(std::string path)
 //    return "";
 //}
 //
-//std::vector<std::string> fs::read(const std::string &file, char delimiter)
+//std::vector<std::string> fs::read(const std::string &file, char sep)
 //{
 //    // todo use fopen
 //    std::vector<std::string> ret;
 //    std::ifstream in(file, std::ios_base::binary);
 //    std::string line;
 //
-//    while (std::getline(in, line, delimiter))
+//    while (std::getline(in, line, sep))
 //        ret.emplace_back(std::move(line));
 //
 //    return ret;

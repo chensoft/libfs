@@ -73,7 +73,7 @@ std::vector<std::string> fs::drives()
 //std::string fs::realpath(const std::string &path)
 //{
 //    // todo optimize add function visit path's segments
-//    char buf[PATH_MAX];
+//    char buf[PATH_MAX];  // todo use std::string(xxx, '\0')
 //
 //    if (::realpath(path.c_str(), buf))
 //        return buf;

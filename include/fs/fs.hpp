@@ -35,7 +35,7 @@ namespace fs
     std::wstring widen(const std::string &utf8);
 
     // UTF-16 to UTF-8
-    std::string narrow(const std::wstring &str);
+    std::string narrow(const std::wstring &utf16);
 
     // Remove the separator at the end
     std::string prune(std::string dir);
@@ -48,8 +48,12 @@ namespace fs
     // @result "/" on Unix always, "C:\" on Windows in most cases
     std::string root();
 
+    // todo current user name
+
     // Retrieve home directory, no separator at the end
     std::string home();
+
+    // todo home directory for specific user
 
     // Retrieve temp directory, no separator at the end
     std::string tmp();
@@ -69,6 +73,10 @@ namespace fs
     // @note support both Unix & Windows path on any platform
     char sep(const std::string &path);
 
+    // todo check codes contains "/\\"
+    // All available separators
+    std::string seps();
+
     // Get mount points or system drives
     // @result "/" on Unix, "C", "D" ... on Windows
     std::vector<std::string> drives();
@@ -85,7 +93,6 @@ namespace fs
     // split
     // -------------------------------------------------------------------------
 
-    // todo provide expand function, expand ~ and variables if possible
     // Expand all symbolic links, remove ".", ".." and redundant separators
     // it will expand the beginning '~' to current home directory
     // it will append relative path to the current working path
@@ -109,10 +116,31 @@ namespace fs
     std::string normalize(std::string path);  // todo some func's string can not be an constant
 
     // Expand ~ to current home directory
-    // todo add test expand ~ == home(), expand ~xxx == ~xxx, expand ~/Users == home()/Users
+    // e.g: "" -> ""
+    // e.g: "~" -> fs::home()
+    // e.g: "~/go" -> fs::home() + "/go"
+    // e.g: "~xxx" -> "~xxx"
     std::string expand(std::string path);
 
     // todo expand variables
+
+    // Tokenize the path into multiple segments, skip redundant separators
+    // Unix:
+    // e.g: "" -> ()
+    // e.g: "/" -> ("/", "")
+    // e.g: "/usr" -> ("/", "usr")
+    // e.g: "/usr/bin" -> ("/", "usr"), ("/", "bin")
+    // e.g: "/usr/bin/" -> ("/", "usr"), ("/", "bin")
+    // e.g: "/usr///bin"  -> ("/", "usr"), ("/", "bin")
+    // Windows:
+    // e.g: "C:\\" -> ("", "C:")
+    // e.g: "C:\\Windows" -> ("", "C:"), ("\\", "Windows")
+    // Mix:
+    // e.g: "C:\\Windows/System32" -> ("", "C:"), ("\\", "Windows"), ("/", "System32")
+    // e.g: "C:\\Windows\\/System32" -> ("", "C:"), ("\\", "Windows"), ("/", "System32") the second '/' remains intact
+    // @result (separator, segment) pairs
+    // @note support both Unix & Windows path on any platform
+    std::vector<std::pair<std::string, std::string>> tokenize(const std::string &path, const std::string &seps = fs::seps());
 
     // Directory name of the path, without the trailing slash
     // Unix:
@@ -217,12 +245,6 @@ namespace fs
     // Get file size
     std::size_t filesize(const std::string &file);
 
-    // Total space about this path's related device
-    std::size_t totalSpace(const std::string &path);
-
-    // Free space about this path's related device
-    std::size_t freeSpace(const std::string &path);
-
     // -------------------------------------------------------------------------
     // operation
     // -------------------------------------------------------------------------
@@ -250,6 +272,8 @@ namespace fs
     // @note non-existent path will be considered successful
     status remove(const std::string &path);
 
+    // todo add trash method
+
     // Copy a file or directory
     // todo if target exist and is dir then copy source file to target folder
     // todo if target not exist, treat it as directory or target file path?
@@ -274,6 +298,10 @@ namespace fs
 
     // todo visit use template and return type F same as the lambda
     // todo visit should return relative path
+    // todo visit should not follow symlink
+    // todo !!!visit callback accept a PathEntry struct, has field: root, name, deep, provide follow_symlink parameter, use enum option?
+    // todo all visit and collect rename to walk
+    // todo do not provide callback, return vector directly, remove functional header
     void visit(const std::string &dir, const std::function<void (const std::string &path)> &callback, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
     void visit(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
 
@@ -294,13 +322,16 @@ namespace fs
     // Read part of file's contents to a string
     std::string read(const std::string &file, std::size_t start, std::size_t length);
 
-    // Read file line by line using delimiter
-    std::vector<std::string> read(const std::string &file, char delimiter);
+    // Read file line by line using separator
+    std::vector<std::string> read(const std::string &file, char sep);
 
     // Write data to the file
     status write(const std::string &file, const std::string &data);
     status write(const std::string &file, const void *data, std::size_t size);
 
+    // Append data to the file
     status append(const std::string &file, const std::string &data);
     status append(const std::string &file, const void *data, std::size_t size);
+
+    // todo add resize, resize file to specific size
 }
