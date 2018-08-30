@@ -93,13 +93,15 @@ namespace fs
     // split
     // -------------------------------------------------------------------------
 
-    // Expand all symbolic links, remove ".", ".." and redundant separators
-    // it will expand the beginning '~' to current home directory
-    // it will append relative path to the current working path
-    std::string realpath(const std::string &path);
+    // Absolute path in the filesystem, expand all symbolic links
+    // *) will expand the beginning '~'
+    // *) will change relative path to absolute
+    // *) will remove ".", ".." and duplicate separators
+    std::string realpath(const std::string &path);  // todo some func's string can not be an constant
 
-    // Normalize path, remove ".", ".." and redundant separators, but does not follow the symbolic link
-    // it will treat the beginning '~' as current user's home directory
+    // Normalize the path, does not expand the symbolic link
+    // *) will expand the beginning '~'
+    // *) will remove ".", ".." and duplicate separators
     // Unix:
     // e.g: "./a" -> "a", "a/./b" -> "a/b", "a///b" -> "a/b"
     // e.g: "a/.../b" -> "a/.../b" because the "..." is invalid path characters, it will be ignored
@@ -113,7 +115,7 @@ namespace fs
     // e.g: "C:\a\..\..\b" -> "C:\b"
     // e.g: "C:\a\..\b" -> "C:\b"
     // @note support both Unix & Windows path on any platform
-    std::string normalize(std::string path);  // todo some func's string can not be an constant
+    std::string normalize(std::string path);
 
     // Expand ~ to current home directory
     // e.g: "" -> ""
@@ -124,64 +126,64 @@ namespace fs
 
     // todo expand variables
 
-    // Tokenize the path into multiple segments, skip redundant separators
+    // Tokenize the path into multiple segments, skip duplicate separators
     // Unix:
-    // e.g: "" -> ()
-    // e.g: "/" -> ("/", "")
-    // e.g: "/usr" -> ("/", "usr")
-    // e.g: "/usr/bin" -> ("/", "usr"), ("/", "bin")
-    // e.g: "/usr/bin/" -> ("/", "usr"), ("/", "bin")
-    // e.g: "/usr///bin"  -> ("/", "usr"), ("/", "bin")
+    // e.g: "" -> nil
+    // e.g: "/" -> "/"
+    // e.g: "usr" -> "usr"
+    // e.g: "/usr" -> "/", "usr"
+    // e.g: "/usr/bin" -> "/", "usr", "/", "bin"
+    // e.g: "/usr/bin/" -> "/", "usr", "/", "bin"
+    // e.g: "/usr///bin"  -> "/", "usr", "/", "bin"
     // Windows:
-    // e.g: "C:\\" -> ("", "C:")
-    // e.g: "C:\\Windows" -> ("", "C:"), ("\\", "Windows")
+    // e.g: "C:\\" -> "C:"
+    // e.g: "C:\\Windows" -> "C:", "\\", "Windows"
     // Mix:
-    // e.g: "C:\\Windows/System32" -> ("", "C:"), ("\\", "Windows"), ("/", "System32")
-    // e.g: "C:\\Windows\\/System32" -> ("", "C:"), ("\\", "Windows"), ("/", "System32") the second '/' remains intact
-    // @result (separator, segment) pairs
+    // e.g: "C:\\Windows/System32" -> "C:", "\\", "Windows", "/", "System32"
+    // e.g: "C:\\Windows\\/System32" -> "C:", "\\", "Windows", "/", "System32" the second '/' remains intact
     // @note support both Unix & Windows path on any platform
-    std::vector<std::pair<std::string, std::string>> tokenize(const std::string &path, const std::string &seps = fs::seps());
+    std::vector<std::string> tokenize(const std::string &path, const std::string &seps = fs::seps());
 
-    // Directory name of the path, without the trailing slash
-    // Unix:
-    // e.g: "." -> ""
-    // e.g: "./usr" -> "."
-    // e.g: "/usr/." -> "/usr", because "." is represent current directory
-    // e.g: "/usr/" -> "/", not "/usr", because single "/" isn't a effective name
-    // e.g: "/usr///" -> "/", because the trailing slash will be ignored
-    // e.g: "/" -> "/", because it's already the root directory
-    // e.g: "file.txt" -> ".", because it's a relative path
-    // e.g: "/home/staff/Downloads/file.txt" -> "/home/staff/Downloads"
-    // Windows:
-    // e.g: "C:\Windows\System32" -> "C:\Windows"
-    // e.g: "C:\Windows\System32\cmd.exe" -> "C:\Windows\System32"
-    // e.g: "C:\\\" -> "C:\"
-    // e.g: "C:\" -> "C:\"
-    // @note support both Unix & Windows path on any platform
-    std::string dirname(const std::string &path);
-
-    // Base name of the path, if you provide suffix, it will be removed from result
-    // Unix:
-    // e.g: "/home/staff/Downloads/file.txt" -> "file.txt"
-    // e.g: "/home/" -> "home"
-    // e.g: "/" -> ""
-    // e.g: "file.txt" -> "file.txt"
-    // Windows:
-    // e.g: "C:\Windows\System32\cmd.exe" -> "cmd.exe"
-    // e.g: "C:\" -> ""
-    // @note support both Unix & Windows path on any platform
-    std::string basename(const std::string &path, bool with_ext = true);
-
-    // Extension name of the path
-    // Unix:
-    // e.g: "/home/staff/Downloads/file.txt" -> ".txt"
-    // e.g: "/home/" -> ""
-    // e.g: "/" -> ""
-    // Windows:
-    // e.g: "C:\Windows\System32\cmd.exe" -> ".exe"
-    // e.g: "C:\" -> ""
-    // @note support both Unix & Windows path on any platform
-    std::string extname(const std::string &path, bool with_dot = true);
+//    // Directory name of the path, without the trailing slash
+//    // Unix:
+//    // e.g: "." -> ""
+//    // e.g: "./usr" -> "."
+//    // e.g: "/usr/." -> "/usr", because "." is represent current directory
+//    // e.g: "/usr/" -> "/", not "/usr", because single "/" isn't a effective name
+//    // e.g: "/usr///" -> "/", because the trailing slash will be ignored
+//    // e.g: "/" -> "/", because it's already the root directory
+//    // e.g: "file.txt" -> ".", because it's a relative path
+//    // e.g: "/home/staff/Downloads/file.txt" -> "/home/staff/Downloads"
+//    // Windows:
+//    // e.g: "C:\Windows\System32" -> "C:\Windows"
+//    // e.g: "C:\Windows\System32\cmd.exe" -> "C:\Windows\System32"
+//    // e.g: "C:\\\" -> "C:\"
+//    // e.g: "C:\" -> "C:\"
+//    // @note support both Unix & Windows path on any platform
+//    std::string dirname(const std::string &path);
+//
+//    // Base name of the path
+//    // Unix:
+//    // e.g: "/home/staff/Downloads/file.txt" -> "file.txt"
+//    // e.g: "/home/" -> "home"
+//    // e.g: "/" -> ""
+//    // e.g: "file.txt" -> "file.txt"
+//    // Windows:
+//    // e.g: "C:\Windows\System32\cmd.exe" -> "cmd.exe"
+//    // e.g: "C:\" -> ""
+//    // @note support both Unix & Windows path on any platform
+//    std::string basename(const std::string &path, bool with_ext = true);
+//
+//    // Extension name of the path
+//    // Unix:
+//    // e.g: "/home/staff/Downloads/file.txt" -> ".txt"
+//    // e.g: "/home/" -> ""
+//    // e.g: "/" -> ""
+//    // Windows:
+//    // e.g: "C:\Windows\System32\cmd.exe" -> ".exe"
+//    // e.g: "C:\" -> ""
+//    // @note support both Unix & Windows path on any platform
+//    std::string extname(const std::string &path, bool with_dot = true);
 
     // -------------------------------------------------------------------------
     // check

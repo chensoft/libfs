@@ -307,7 +307,7 @@ std::vector<std::string> fs::drives()
 //    // todo do not recursive?
 //    while ((item = ::readdir(ptr.get())))
 //    {
-//        if (((item->d_name[0] == '.') && !item->d_name[1]) || ((item->d_name[0] == '.') && (item->d_name[1] == '.') && !item->d_name[2]))
+//        if ((item->d_name[0] == '.' && !item->d_name[1]) || (item->d_name[0] == '.' && item->d_name[1] == '.' && !item->d_name[2]))
 //            continue;
 //
 //        std::string path(dir + fs::sep());
@@ -317,7 +317,7 @@ std::vector<std::string> fs::drives()
 //        if (stop)
 //            return;
 //
-//        if (recursive && ((item->d_type == DT_DIR) || (item->d_type == DT_UNKNOWN)))
+//        if (recursive && (item->d_type == DT_DIR || item->d_type == DT_UNKNOWN))
 //            fs::visit(path, callback, recursive);
 //    }
 //}
@@ -337,7 +337,7 @@ std::vector<std::string> fs::drives()
 //
 //    while ((item = ::readdir(ptr.get())))
 //    {
-//        if (((item->d_name[0] == '.') && !item->d_name[1]) || ((item->d_name[0] == '.') && (item->d_name[1] == '.') && !item->d_name[2]))
+//        if ((item->d_name[0] == '.' && !item->d_name[1]) || (item->d_name[0] == '.' && item->d_name[1] == '.' && !item->d_name[2]))
 //            continue;
 //
 //        std::string path(dir + fs::sep());
@@ -347,7 +347,7 @@ std::vector<std::string> fs::drives()
 //        if (stop)
 //            return true;
 //
-//        if (recursive && ((item->d_type == DT_DIR) || (item->d_type == DT_UNKNOWN)))
+//        if (recursive && (item->d_type == DT_DIR || item->d_type == DT_UNKNOWN))
 //            queue.emplace(std::move(path));
 //    }
 //
@@ -376,13 +376,13 @@ std::vector<std::string> fs::drives()
 //
 //    while ((item = ::readdir(ptr.get())))
 //    {
-//        if (((item->d_name[0] == '.') && !item->d_name[1]) || ((item->d_name[0] == '.') && (item->d_name[1] == '.') && !item->d_name[2]))
+//        if ((item->d_name[0] == '.' && !item->d_name[1]) || (item->d_name[0] == '.' && item->d_name[1] == '.' && !item->d_name[2]))
 //            continue;
 //
 //        std::string path(dir + fs::sep());
 //        path += item->d_name;
 //
-//        if (recursive && ((item->d_type == DT_DIR) || (item->d_type == DT_UNKNOWN)))
+//        if (recursive && (item->d_type == DT_DIR || item->d_type == DT_UNKNOWN))
 //            fs::visit(path, callback, recursive);
 //
 //        callback(path, &stop);

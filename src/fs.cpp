@@ -30,7 +30,7 @@ std::string fs::prune(std::string dir)
     auto beg = dir.c_str();
     auto ptr = beg + dir.size() - 1;
 
-    while ((ptr >= beg) && ((*ptr == '/') || (*ptr == '\\')))
+    while (ptr >= beg && (*ptr == '/' || *ptr == '\\'))
         --ptr;
 
     return dir.resize(ptr - beg + 1), dir;
@@ -77,7 +77,7 @@ std::string fs::drive(const std::string &path)
     if (path.front() == '/')
         return "/";
 
-    return (path.size() >= 3) && std::isalpha(path[0]) && (path[1] == ':') && (path[2] == '\\') ? path.substr(0, 1) : "";
+    return path.size() >= 3 && std::isalpha(path[0]) && path[1] == ':' && path[2] == '\\' ? path.substr(0, 1) : "";
 }
 
 // -----------------------------------------------------------------------------
@@ -89,22 +89,22 @@ std::string fs::normalize(std::string path)
     auto ret = std::string();
 //    auto tok = fs::tokenize(fs::expand(std::move(path)));
 //
-//    for (auto it = tok.begin(); it != tok.end(); ++it)
+//    for (auto &pair : tok)
 //    {
 //        // ignore "."
-//        if (it->second == ".")
+//        if (pair.second == ".")
 //            continue;
 //
 //        // backtrace ".."
-//        if (it->second == "..")
+//        if (pair.second == "..")
 //        {
 //            auto pos = ret.find_last_of(fs::seps());
 //            ret.resize(pos == std::string::npos ? 0 : (std::max)((decltype(pos))1, pos));  // preserve first '/'
 //            continue;
 //        }
 //
-//        ret += it->first;
-//        ret += it->second;
+//        ret += pair.first;
+//        ret += pair.second;
 //    }
 
     return ret;
@@ -113,12 +113,12 @@ std::string fs::normalize(std::string path)
 std::string fs::expand(std::string path)
 {
     auto ptr = path.c_str();
-    return (*ptr++ == '~') && ((*ptr == '/') || (*ptr == '\\') || !*ptr) ? path.replace(0, 1, fs::home()), path : path;
+    return *ptr++ == '~' && (*ptr == '/' || *ptr == '\\' || !*ptr) ? path.replace(0, 1, fs::home()), path : path;
 }
 
-std::vector<std::pair<std::string, std::string>> fs::tokenize(const std::string &path, const std::string &seps)
+std::vector<std::string> fs::tokenize(const std::string &path, const std::string &seps)
 {
-    std::vector<std::pair<std::string, std::string>> ret;
+    std::vector<std::string> ret;
 
     const char *beg = path.c_str();
     const char *end = nullptr;
@@ -126,19 +126,21 @@ std::vector<std::pair<std::string, std::string>> fs::tokenize(const std::string 
 
     for (; *cur; cur = end)
     {
-        // skip redundant separators
+        // skip duplicate separators
         while (seps.find(*cur) != std::string::npos)
             ++cur;
 
         // locate end pointer
-        for (end = cur; *end && (seps.find(*end) == std::string::npos); ++end)
+        for (end = cur; *end && seps.find(*end) == std::string::npos; ++end)
             ;
 
-        if (end - cur == 0 && cur - beg > 1)
-            break;
+        // add new separator
+        if (cur == beg + 1 || (cur > beg && end != cur))
+            ret.emplace_back(cur - 1, cur);
 
         // add new component
-        ret.emplace_back(std::piecewise_construct, std::forward_as_tuple(cur == beg ? cur : cur - 1, cur), std::forward_as_tuple(cur, end));
+        if (end != cur)
+            ret.emplace_back(cur, end);
     }
 
     return ret;
