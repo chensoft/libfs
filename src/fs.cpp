@@ -58,12 +58,6 @@ std::string fs::uuid()
     return pattern;
 }
 
-char fs::sep(const std::string &path)
-{
-    auto pos = path.find_first_of("/\\");
-    return pos != std::string::npos ? path[pos] : fs::sep();
-}
-
 std::string fs::drive(const std::string &path)
 {
     if (path.empty())
@@ -125,10 +119,10 @@ std::string fs::expand(std::string path)
 
 std::vector<std::string> fs::tokenize(const std::string &path)
 {
-    std::vector<std::string> ret;
+    std::vector<std::string> ret(1, fs::drive(path));
     std::string seps("/\\");
 
-    const char *beg = path.c_str();
+    const char *beg = path.c_str() + ret.front().size();
     const char *end = nullptr;
     const char *cur = beg;
 

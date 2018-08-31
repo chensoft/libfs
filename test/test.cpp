@@ -35,10 +35,6 @@ TEST_CASE("fs")
         CHECK(!fs::uuid().empty());
 
         CHECK(fs::sep());
-        CHECK(fs::sep("bin") == fs::sep());
-        CHECK(fs::sep("/bin") == '/');
-        CHECK(fs::sep("C:\\Windows") == '\\');  // support Windows path on Unix
-        CHECK(fs::sep("Users\\x/Downloads") == '\\');  // mix '\' and '/' is valid on Windows
 
         CHECK(!fs::drives().empty());
 
@@ -75,17 +71,17 @@ TEST_CASE("fs")
 
         typedef std::vector<std::string> tokenize_type;
 
-        CHECK(fs::tokenize("").empty());
+        CHECK(fs::tokenize("") == tokenize_type({""}));
         CHECK(fs::tokenize("/") == tokenize_type({"/"}));
-        CHECK(fs::tokenize("usr") == tokenize_type({"usr"}));
+        CHECK(fs::tokenize("usr") == tokenize_type({"", "usr"}));
         CHECK(fs::tokenize("/usr") == tokenize_type({"/", "usr"}));
         CHECK(fs::tokenize("/usr/bin") == tokenize_type({"/", "usr", "/", "bin"}));
         CHECK(fs::tokenize("/usr/bin/") == tokenize_type({"/", "usr", "/", "bin"}));
         CHECK(fs::tokenize("/usr///bin") == tokenize_type({"/", "usr", "/", "bin"}));
-        CHECK(fs::tokenize("C:\\") == tokenize_type({"C:"}));
-        CHECK(fs::tokenize("C:\\Windows") == tokenize_type({"C:", "\\", "Windows"}));
-        CHECK(fs::tokenize("C:\\Windows/System32") == tokenize_type({"C:", "\\", "Windows", "/", "System32"}));
-        CHECK(fs::tokenize("C:\\Windows\\/System32") == tokenize_type({"C:", "\\", "Windows", "/", "System32"}));
+        CHECK(fs::tokenize("C:\\") == tokenize_type({"C:\\"}));
+        CHECK(fs::tokenize("C:\\Windows") == tokenize_type({"C:\\", "Windows"}));
+        CHECK(fs::tokenize("C:\\Windows/System32") == tokenize_type({"C:\\", "Windows", "/", "System32"}));
+        CHECK(fs::tokenize("C:\\Windows\\/System32") == tokenize_type({"C:\\", "Windows", "/", "System32"}));
 
         // todo rename source, target to others
         //        auto source = fs::tmp() + fs::sep() + fs::uuid();  // todo check others do not write multiple file names

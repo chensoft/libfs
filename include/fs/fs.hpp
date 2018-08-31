@@ -64,14 +64,9 @@ namespace fs
     // Generate a uuid string
     std::string uuid();
 
-    // Separator on this platform
+    // Separator on current system
     // @result '/' on Unix, '\' on Windows
     char sep();
-
-    // Separator based on the path
-    // @result '/' or '\' when one of them was first found, if not exist then return sep()
-    // @note support both Unix & Windows path on any platform
-    char sep(const std::string &path);
 
     // todo check codes contains "/\\"
 
@@ -124,11 +119,11 @@ namespace fs
 
     // todo expand variables
 
-    // Tokenize the path into multiple segments, skip duplicate separators
+    // Tokenize the path into multiple segments, the first item is always drive letter
     // Unix:
-    // e.g: "" -> nil
+    // e.g: "" -> ""
     // e.g: "/" -> "/"
-    // e.g: "usr" -> "usr"
+    // e.g: "usr" -> "", "usr" first item empty means it's a relative path
     // e.g: "/usr" -> "/", "usr"
     // e.g: "/usr/bin" -> "/", "usr", "/", "bin"
     // e.g: "/usr/bin/" -> "/", "usr", "/", "bin"
