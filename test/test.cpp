@@ -39,11 +39,10 @@ TEST_CASE("fs")
         CHECK(fs::sep("/bin") == '/');
         CHECK(fs::sep("C:\\Windows") == '\\');  // support Windows path on Unix
         CHECK(fs::sep("Users\\x/Downloads") == '\\');  // mix '\' and '/' is valid on Windows
-        CHECK(fs::seps() == "/\\");
 
         CHECK(!fs::drives().empty());
 
-        CHECK(fs::drive("C:\\Windows\\System32") == "C");
+        CHECK(fs::drive("C:\\Windows\\System32") == "C:\\");
         CHECK(fs::drive("/usr/local") == "/");
         CHECK(fs::drive("file.txt").empty());
         CHECK(fs::drive("").empty());
@@ -68,11 +67,11 @@ TEST_CASE("fs")
 //        CHECK(fs::normalize("C:\\a\\...\\b") == "C:\\a\\...\\b");
 //        CHECK(fs::normalize("C:\\a\\..\\..\\b") == "C:\\b");
 //        CHECK(fs::normalize("C:\\a\\..\\b") == "C:\\b");
-//
-//        CHECK(fs::expand("").empty());
-//        CHECK(fs::expand("~") == fs::home());
-//        CHECK(fs::expand("~/go") == fs::home() + "/go");
-//        CHECK(fs::expand("~xxx") == "~xxx");
+
+        CHECK(fs::expand("").empty());
+        CHECK(fs::expand("~") == fs::home());
+        CHECK(fs::expand("~/go") == fs::home() + "/go");
+        CHECK(fs::expand("~xxx") == "~xxx");
 
         typedef std::vector<std::string> tokenize_type;
 

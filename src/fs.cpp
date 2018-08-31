@@ -64,11 +64,6 @@ char fs::sep(const std::string &path)
     return pos != std::string::npos ? path[pos] : fs::sep();
 }
 
-std::string fs::seps()
-{
-    return "/\\";
-}
-
 std::string fs::drive(const std::string &path)
 {
     if (path.empty())
@@ -77,7 +72,7 @@ std::string fs::drive(const std::string &path)
     if (path.front() == '/')
         return "/";
 
-    return path.size() >= 3 && std::isalpha(path[0]) && path[1] == ':' && path[2] == '\\' ? path.substr(0, 1) : "";
+    return path.size() >= 3 && std::isalpha(path[0]) && path[1] == ':' && path[2] == '\\' ? path.substr(0, 3) : "";
 }
 
 // -----------------------------------------------------------------------------
@@ -85,29 +80,41 @@ std::string fs::drive(const std::string &path)
 std::string fs::normalize(std::string path)
 {
     // todo test speed with old version
-    // todo allow mix windows and unix style
-    auto ret = std::string();
-//    auto tok = fs::tokenize(fs::expand(std::move(path)));
+    auto tok = fs::tokenize(fs::expand(std::move(path)));
+
+    // 用前置判断/./a
+//    auto len = tok.size();
 //
-//    for (auto &pair : tok)
+//    // if first item is "/"
+//    if (len && tok.front() == "/")
+//        ret += "/";
+//
+//    for (std::size_t i = ret.size(); i < len; i += 2)
 //    {
+//        auto component = &tok[i];
+//        auto separator = i + 1 < len ? &tok[i + 1] : nullptr;
+//
 //        // ignore "."
-//        if (pair.second == ".")
+//        if (*component == ".")
 //            continue;
 //
 //        // backtrace ".."
-//        if (pair.second == "..")
+//        if (*component == "..")
 //        {
+//            // todo ignore if ret only contains drive letter
+//
+//            //
 //            auto pos = ret.find_last_of(fs::seps());
 //            ret.resize(pos == std::string::npos ? 0 : (std::max)((decltype(pos))1, pos));  // preserve first '/'
 //            continue;
 //        }
+//    }
 //
 //        ret += pair.first;
 //        ret += pair.second;
 //    }
 
-    return ret;
+    return path;
 }
 
 std::string fs::expand(std::string path)
@@ -116,9 +123,10 @@ std::string fs::expand(std::string path)
     return *ptr++ == '~' && (*ptr == '/' || *ptr == '\\' || !*ptr) ? path.replace(0, 1, fs::home()), path : path;
 }
 
-std::vector<std::string> fs::tokenize(const std::string &path, const std::string &seps)
+std::vector<std::string> fs::tokenize(const std::string &path)
 {
     std::vector<std::string> ret;
+    std::string seps("/\\");
 
     const char *beg = path.c_str();
     const char *end = nullptr;

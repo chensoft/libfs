@@ -74,15 +74,13 @@ namespace fs
     char sep(const std::string &path);
 
     // todo check codes contains "/\\"
-    // All available separators
-    std::string seps();
 
     // Get mount points or system drives
     // @result "/" on Unix, "C", "D" ... on Windows
     std::vector<std::string> drives();
 
     // Get path's mount point or drive
-    // e.g: "C:\Windows\System32" -> "C"
+    // e.g: "C:\Windows\System32" -> "C:\"
     // e.g: "/usr/local" -> "/"
     // e.g: "file.txt" -> ""
     // e.g: "" -> ""
@@ -136,13 +134,13 @@ namespace fs
     // e.g: "/usr/bin/" -> "/", "usr", "/", "bin"
     // e.g: "/usr///bin"  -> "/", "usr", "/", "bin"
     // Windows:
-    // e.g: "C:\\" -> "C:"
-    // e.g: "C:\\Windows" -> "C:", "\\", "Windows"
+    // e.g: "C:\" -> "C:\"
+    // e.g: "C:\Windows" -> "C:\", "Windows"
     // Mix:
-    // e.g: "C:\\Windows/System32" -> "C:", "\\", "Windows", "/", "System32"
-    // e.g: "C:\\Windows\\/System32" -> "C:", "\\", "Windows", "/", "System32" the second '/' remains intact
+    // e.g: "C:\Windows/System32" -> "C:\", "Windows", "/", "System32"
+    // e.g: "C:\Windows\/System32" -> "C:\", "Windows", "/", "System32" the second separator '/' remains intact
     // @note support both Unix & Windows path on any platform
-    std::vector<std::string> tokenize(const std::string &path, const std::string &seps = fs::seps());
+    std::vector<std::string> tokenize(const std::string &path);
 
 //    // Directory name of the path, without the trailing slash
 //    // Unix:
@@ -157,7 +155,7 @@ namespace fs
 //    // Windows:
 //    // e.g: "C:\Windows\System32" -> "C:\Windows"
 //    // e.g: "C:\Windows\System32\cmd.exe" -> "C:\Windows\System32"
-//    // e.g: "C:\\\" -> "C:\"
+//    // e.g: "C:\\" -> "C:\"
 //    // e.g: "C:\" -> "C:\"
 //    // @note support both Unix & Windows path on any platform
 //    std::string dirname(const std::string &path);
