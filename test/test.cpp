@@ -35,6 +35,7 @@ TEST_CASE("fs")
         CHECK(!fs::uuid().empty());
 
         CHECK(fs::sep());
+        CHECK(fs::seps() == "/\\");
 
         CHECK(!fs::drives().empty());
 
@@ -47,22 +48,23 @@ TEST_CASE("fs")
     // -------------------------------------------------------------------------
     SECTION("split")
     {
-//        CHECK(fs::normalize("").empty());
-//        CHECK(fs::normalize("~") == fs::home());
-//        CHECK(fs::normalize("./a") == "a");
-//        CHECK(fs::normalize("a/./b") == "a/b");
-//        CHECK(fs::normalize("a///b") == "a/b");
-//        CHECK(fs::normalize("a/.../b") == "a/.../b");  // this is a invalid path
-//        CHECK(fs::normalize("a/../../b") == "../b");   // the second .. don't know how to removed
-//        CHECK(fs::normalize("a/b/..") == "a");
-//        CHECK(fs::normalize("a/../b") == "b");
-//        CHECK(fs::normalize("/..") == "/");
-//
-//        CHECK(fs::normalize("C:\\a") == "C:\\a");
-//        CHECK(fs::normalize("C:\\.\\a") == "C:\\a");
-//        CHECK(fs::normalize("C:\\a\\...\\b") == "C:\\a\\...\\b");
-//        CHECK(fs::normalize("C:\\a\\..\\..\\b") == "C:\\b");
-//        CHECK(fs::normalize("C:\\a\\..\\b") == "C:\\b");
+        CHECK(fs::normalize("").empty());
+        CHECK(fs::normalize("~") == fs::home());
+        CHECK(fs::normalize("./a") == "a");
+        CHECK(fs::normalize("a/.") == "a");
+        CHECK(fs::normalize("a/./b") == "a/b");
+        CHECK(fs::normalize("a///b") == "a/b");
+        CHECK(fs::normalize("a/.../b") == "a/.../b");  // this is a invalid path
+        CHECK(fs::normalize("a/../../b") == "../b");   // the second .. don't know how to removed
+        CHECK(fs::normalize("a/b/..") == "a");
+        CHECK(fs::normalize("a/../b") == "b");
+        CHECK(fs::normalize("/..") == "/");
+
+        CHECK(fs::normalize("C:\\a") == "C:\\a");
+        CHECK(fs::normalize("C:\\.\\a") == "C:\\a");
+        CHECK(fs::normalize("C:\\a\\...\\b") == "C:\\a\\...\\b");
+        CHECK(fs::normalize("C:\\a\\..\\..\\b") == "C:\\b");
+        CHECK(fs::normalize("C:\\a\\..\\b") == "C:\\b");
 
         CHECK(fs::expand("").empty());
         CHECK(fs::expand("~") == fs::home());
@@ -71,17 +73,26 @@ TEST_CASE("fs")
 
         typedef std::vector<std::string> tokenize_type;
 
-        CHECK(fs::tokenize("") == tokenize_type({""}));
-        CHECK(fs::tokenize("/") == tokenize_type({"/"}));
-        CHECK(fs::tokenize("usr") == tokenize_type({"", "usr"}));
-        CHECK(fs::tokenize("/usr") == tokenize_type({"/", "usr"}));
-        CHECK(fs::tokenize("/usr/bin") == tokenize_type({"/", "usr", "/", "bin"}));
-        CHECK(fs::tokenize("/usr/bin/") == tokenize_type({"/", "usr", "/", "bin"}));
-        CHECK(fs::tokenize("/usr///bin") == tokenize_type({"/", "usr", "/", "bin"}));
-        CHECK(fs::tokenize("C:\\") == tokenize_type({"C:\\"}));
-        CHECK(fs::tokenize("C:\\Windows") == tokenize_type({"C:\\", "Windows"}));
-        CHECK(fs::tokenize("C:\\Windows/System32") == tokenize_type({"C:\\", "Windows", "/", "System32"}));
-        CHECK(fs::tokenize("C:\\Windows\\/System32") == tokenize_type({"C:\\", "Windows", "/", "System32"}));
+        auto tokenize = [] (const std::string &path) {
+            tokenize_type ret;
+            fs::tokenize(path, [&] (std::string component, char separator) {
+                ret.emplace_back(std::move(component));
+                ret.emplace_back(separator ? 1 : 0, separator);
+            });
+            return ret;
+        };
+
+        CHECK(tokenize("") == tokenize_type({"", ""}));
+        CHECK(tokenize("/") == tokenize_type({"/", ""}));
+        CHECK(tokenize("usr") == tokenize_type({"", "", "usr", ""}));
+        CHECK(tokenize("/usr") == tokenize_type({"/", "", "usr", ""}));
+        CHECK(tokenize("/usr/bin") == tokenize_type({"/", "", "usr", "/", "bin", ""}));
+        CHECK(tokenize("/usr/bin/") == tokenize_type({"/", "", "usr", "/", "bin", "/"}));
+        CHECK(tokenize("/usr///bin") == tokenize_type({"/", "", "usr", "/", "bin", ""}));
+        CHECK(tokenize("C:\\") == tokenize_type({"C:\\", ""}));
+        CHECK(tokenize("C:\\Windows") == tokenize_type({"C:\\", "", "Windows", ""}));
+        CHECK(tokenize("C:\\Windows/System32") == tokenize_type({"C:\\", "", "Windows", "/", "System32", ""}));
+        CHECK(tokenize("C:\\Windows\\/System32") == tokenize_type({"C:\\", "", "Windows", "\\", "System32", ""}));
 
         // todo rename source, target to others
         //        auto source = fs::tmp() + fs::sep() + fs::uuid();  // todo check others do not write multiple file names

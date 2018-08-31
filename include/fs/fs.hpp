@@ -69,6 +69,8 @@ namespace fs
     char sep();
 
     // todo check codes contains "/\\"
+    // Separator on all platforms
+    std::string seps();
 
     // Get mount points or system drives
     // @result "/" on Unix, "C", "D" ... on Windows
@@ -96,7 +98,7 @@ namespace fs
     // *) will expand the beginning '~'
     // *) will remove ".", ".." and duplicate separators
     // Unix:
-    // e.g: "./a" -> "a", "a/./b" -> "a/b", "a///b" -> "a/b"
+    // e.g: "./a" -> "a", "a/." -> "a", "a/./b" -> "a/b", "a///b" -> "a/b"
     // e.g: "a/.../b" -> "a/.../b" because the "..." is invalid path characters, it will be ignored
     // e.g: "a/../../b" -> "../b" because the path is relative and second ".." can't be removed
     // e.g: "a/../b" -> "b"
@@ -119,23 +121,25 @@ namespace fs
 
     // todo expand variables
 
-    // Tokenize the path into multiple segments, the first item is always drive letter
+    // Tokenize the path into multiple segments, the first item is always the drive letter
+    // *) will use empty string if no drives
+    // *) will skip the duplicate separators
     // Unix:
-    // e.g: "" -> ""
-    // e.g: "/" -> "/"
-    // e.g: "usr" -> "", "usr" first item empty means it's a relative path
-    // e.g: "/usr" -> "/", "usr"
-    // e.g: "/usr/bin" -> "/", "usr", "/", "bin"
-    // e.g: "/usr/bin/" -> "/", "usr", "/", "bin"
-    // e.g: "/usr///bin"  -> "/", "usr", "/", "bin"
+    // e.g: "" -> ("", "")
+    // e.g: "/" -> ("/", "")
+    // e.g: "usr" -> ("", ""), ("usr", "") first item empty means it's a relative path
+    // e.g: "/usr" -> ("/", ""), ("usr", "")
+    // e.g: "/usr/bin" -> ("/", ""), ("usr", "/"), ("bin", "")
+    // e.g: "/usr/bin/" -> ("/", ""), ("usr", "/"), ("bin", "/") the last '/' is preserved
+    // e.g: "/usr///bin"  -> ("/", ""), ("usr", "/"), ("bin", "")
     // Windows:
-    // e.g: "C:\" -> "C:\"
-    // e.g: "C:\Windows" -> "C:\", "Windows"
+    // e.g: "C:\" -> ("C:\", "")
+    // e.g: "C:\Windows" -> ("C:\", ""), ("Windows", "")
     // Mix:
-    // e.g: "C:\Windows/System32" -> "C:\", "Windows", "/", "System32"
-    // e.g: "C:\Windows\/System32" -> "C:\", "Windows", "/", "System32" the second separator '/' remains intact
+    // e.g: "C:\Windows/System32" -> ("C:\", ""), ("Windows", "/"), ("System32", "")
+    // e.g: "C:\Windows\/System32" -> ("C:\", ""), ("Windows", "\"), ("System32", "") the second separator is '\'
     // @note support both Unix & Windows path on any platform
-    std::vector<std::string> tokenize(const std::string &path);
+    void tokenize(const std::string &path, const std::function<void (std::string component, char separator)> &callback);
 
 //    // Directory name of the path, without the trailing slash
 //    // Unix:
@@ -296,7 +300,7 @@ namespace fs
     // todo visit should not follow symlink
     // todo !!!visit callback accept a PathEntry struct, has field: root, name, deep, provide follow_symlink parameter, use enum option?
     // todo all visit and collect rename to walk
-    // todo do not provide callback, return vector directly, remove functional header
+    // todo do not provide callback, return vector directly
     void visit(const std::string &dir, const std::function<void (const std::string &path)> &callback, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
     void visit(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
 

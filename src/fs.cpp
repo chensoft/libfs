@@ -46,7 +46,7 @@ std::string fs::uuid()
 
     for (auto &c : pattern)
     {
-        if ((c == '-') || (c == '4'))
+        if (c == '-' || c == '4')
             continue;
 
         auto r = static_cast<int>((double)device() / threshold * 16);
@@ -56,6 +56,11 @@ std::string fs::uuid()
     }
 
     return pattern;
+}
+
+std::string fs::seps()
+{
+    return "/\\";
 }
 
 std::string fs::drive(const std::string &path)
@@ -74,41 +79,46 @@ std::string fs::drive(const std::string &path)
 std::string fs::normalize(std::string path)
 {
     // todo test speed with old version
-    auto tok = fs::tokenize(fs::expand(std::move(path)));
+    std::string ret;
+    std::string drv;
 
-    // 用前置判断/./a
-//    auto len = tok.size();
-//
-//    // if first item is "/"
-//    if (len && tok.front() == "/")
-//        ret += "/";
-//
-//    for (std::size_t i = ret.size(); i < len; i += 2)
-//    {
-//        auto component = &tok[i];
-//        auto separator = i + 1 < len ? &tok[i + 1] : nullptr;
-//
-//        // ignore "."
-//        if (*component == ".")
-//            continue;
-//
-//        // backtrace ".."
-//        if (*component == "..")
-//        {
-//            // todo ignore if ret only contains drive letter
-//
-//            //
-//            auto pos = ret.find_last_of(fs::seps());
-//            ret.resize(pos == std::string::npos ? 0 : (std::max)((decltype(pos))1, pos));  // preserve first '/'
-//            continue;
-//        }
-//    }
-//
-//        ret += pair.first;
-//        ret += pair.second;
-//    }
+    bool drive = false;
 
-    return path;
+    fs::tokenize(fs::expand(std::move(path)), [&] (std::string component, char separator) {
+        // add drive letter
+        if (!drive)
+        {
+            drive = true;
+            ret = drv = component;
+            return;
+        }
+
+        // ignore "."
+        if (component == ".")
+            return;
+
+        // backtrace ".."
+        if (component == ".." && !ret.empty())
+        {
+            // can not exceed drive
+            if (ret == drv)
+                return;
+
+            // resize the final ret
+            auto pos = ret.find_last_of(fs::seps(), ret.size() - 2);
+            ret.resize(pos == std::string::npos ? 0 : pos + 1);
+
+            return;
+        }
+
+        // add segment
+        ret += component;
+
+        if (separator)
+            ret += separator;
+    });
+
+    return ret == drv ? ret : fs::prune(std::move(ret));
 }
 
 std::string fs::expand(std::string path)
@@ -117,35 +127,34 @@ std::string fs::expand(std::string path)
     return *ptr++ == '~' && (*ptr == '/' || *ptr == '\\' || !*ptr) ? path.replace(0, 1, fs::home()), path : path;
 }
 
-std::vector<std::string> fs::tokenize(const std::string &path)
+void fs::tokenize(const std::string &path, const std::function<void (std::string component, char separator)> &callback)
 {
-    std::vector<std::string> ret(1, fs::drive(path));
-    std::string seps("/\\");
+    std::string drive(fs::drive(path));
+    std::string delim(fs::seps());
 
-    const char *beg = path.c_str() + ret.front().size();
+    // handle drive letter first
+    callback(drive, '\0');
+
+    const char *beg = path.c_str() + drive.size();
     const char *end = nullptr;
     const char *cur = beg;
 
     for (; *cur; cur = end)
     {
         // skip duplicate separators
-        while (seps.find(*cur) != std::string::npos)
+        while (delim.find(*cur) != std::string::npos)
             ++cur;
 
         // locate end pointer
-        for (end = cur; *end && seps.find(*end) == std::string::npos; ++end)
+        for (end = cur; *end && delim.find(*end) == std::string::npos; ++end)
             ;
 
-        // add new separator
-        if (cur == beg + 1 || (cur > beg && end != cur))
-            ret.emplace_back(cur - 1, cur);
+        if (end == cur)
+            break;
 
-        // add new component
-        if (end != cur)
-            ret.emplace_back(cur, end);
+        // invoke the callback
+        callback(std::string(cur, end), *end ? *end : '\0');
     }
-
-    return ret;
 }
 
 //std::string fs::dirname(const std::string &path)
