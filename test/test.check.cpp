@@ -1,37 +1,14 @@
 /**
  * Created by Jian Chen
- * @since  2018.08.16
+ * @since  2018.09.03
  * @author Jian Chen <admin@chensoft.com>
  * @link   http://chensoft.com
  */
-#if defined(__unix__) || defined(__APPLE__)
-
 #include "fs/fs.hpp"
 #include "catch.hpp"
 
-TEST_CASE("fs.unix")
+TEST_CASE("fs.check")
 {
-    // -------------------------------------------------------------------------
-    SECTION("path")
-    {
-        CHECK(fs::root() == "/");
-
-        CHECK(!fs::home().empty());
-        CHECK(!::unsetenv("HOME"));
-        CHECK(!fs::home().empty());
-        CHECK(!::setenv("HOME", fs::home().c_str(), 1));
-
-        auto tmp = fs::tmp();
-
-        CHECK(!tmp.empty());
-        CHECK(!::unsetenv("TMPDIR"));
-        CHECK(fs::tmp() == "/tmp");
-        CHECK(!::setenv("TMPDIR", tmp.c_str(), 1));
-    }
-
-//    // -------------------------------------------------------------------------
-//    SECTION("check")
-//    {
 //        // todo can move to test.cpp
 //        {
 //            auto tmp = fs::tmp() + "/" + fs::uuid();
@@ -83,15 +60,4 @@ TEST_CASE("fs.unix")
 //            CHECK(fs::write(tmp + "/file.txt", "abc"));
 //            CHECK_FALSE(fs::isEmpty(tmp + "/file.txt"));
 //        }
-//    }
-//
-//    // -------------------------------------------------------------------------
-//    SECTION("mode")
-//    {
-//        fs::isReadable("/");
-//        fs::isWritable("/");
-//        fs::isExecutable("/");
-//    }
 }
-
-#endif

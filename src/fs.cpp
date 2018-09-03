@@ -5,8 +5,6 @@
  * @link   http://chensoft.com
  */
 #include "fs/fs.hpp"
-#include <sys/stat.h>
-#include <fstream>
 #include <codecvt>
 #include <memory>
 #include <random>
@@ -14,7 +12,7 @@
 #include <cctype>
 
 // -----------------------------------------------------------------------------
-// helper
+// utils
 std::wstring fs::widen(const std::string &utf8)
 {
     return std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().from_bytes(utf8);
@@ -27,13 +25,11 @@ std::string fs::narrow(const std::wstring &utf16)
 
 std::string fs::prune(std::string dir)
 {
-    auto beg = dir.c_str();
-    auto ptr = beg + dir.size() - 1;
+    dir.erase(std::find_if(dir.rbegin(), dir.rend(), [] (char c) {
+        return fs::seps().find(c) == std::string::npos;
+    }).base(), dir.end());
 
-    while (ptr >= beg && (*ptr == '/' || *ptr == '\\'))
-        --ptr;
-
-    return dir.resize(ptr - beg + 1), dir;
+    return dir;
 }
 
 // -----------------------------------------------------------------------------
