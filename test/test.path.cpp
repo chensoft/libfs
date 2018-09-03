@@ -12,6 +12,8 @@ TEST_CASE("fs.path")
     SECTION("all")
     {
         CHECK(!fs::root().empty());
+        CHECK(!fs::user().empty());
+        CHECK(fs::home(fs::user()) == fs::home());
         CHECK(fs::home().back() != fs::sep());
         CHECK(fs::tmp().back() != fs::sep());
         CHECK(fs::cwd().back() != fs::sep());

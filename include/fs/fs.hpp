@@ -48,12 +48,12 @@ namespace fs
     // @result "/" on Unix always, "C:\" on Windows in most cases
     std::string root();
 
-    // todo current user name
+    // Retrieve current user
+    std::string user();
 
     // Retrieve home directory, no separator at the end
     std::string home();
-
-    // todo home directory for specific user
+    std::string home(const std::string &user);
 
     // Retrieve temp directory, no separator at the end
     std::string tmp();
@@ -68,7 +68,6 @@ namespace fs
     // @result '/' on Unix, '\' on Windows
     char sep();
 
-    // todo check codes contains "/\\"
     // Separator on all platforms
     std::string seps();
 

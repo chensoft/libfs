@@ -28,6 +28,12 @@ std::string fs::root()
     return "/";
 }
 
+std::string fs::user()
+{
+    auto pwd = ::getpwuid(::getuid());
+    return pwd ? pwd->pw_name : "";
+}
+
 std::string fs::home()
 {
     // check env first
@@ -36,13 +42,14 @@ std::string fs::home()
         return fs::prune(env);
 
     // check passwd file
-    struct ::passwd  pwd = {};
-    struct ::passwd *ret = nullptr;
+    auto pwd = ::getpwuid(::getuid());
+    return pwd ? fs::prune(pwd->pw_dir) : "";
+}
 
-    char buf[std::max(1024l, ::sysconf(_SC_GETPW_R_SIZE_MAX))];
-    ::getpwuid_r(::getuid(), &pwd, buf, sizeof(buf), &ret);
-
-    return ret ? fs::prune(pwd.pw_dir) : "";
+std::string fs::home(const std::string &user)
+{
+    auto pwd = ::getpwnam(user.c_str());
+    return pwd ? fs::prune(pwd->pw_dir) : "";
 }
 
 std::string fs::tmp()

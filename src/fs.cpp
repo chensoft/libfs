@@ -5,6 +5,7 @@
  * @link   http://chensoft.com
  */
 #include "fs/fs.hpp"
+#include <algorithm>
 #include <codecvt>
 #include <memory>
 #include <random>
@@ -120,7 +121,7 @@ std::string fs::normalize(std::string path)
 std::string fs::expand(std::string path)
 {
     auto ptr = path.c_str();
-    return *ptr++ == '~' && (*ptr == '/' || *ptr == '\\' || !*ptr) ? path.replace(0, 1, fs::home()), path : path;
+    return *ptr++ == '~' && (fs::seps().find(*ptr) != std::string::npos || !*ptr) ? path.replace(0, 1, fs::home()), path : path;
 }
 
 void fs::tokenize(const std::string &path, const std::function<void (std::string component, char separator)> &callback)
