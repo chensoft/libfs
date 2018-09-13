@@ -16,12 +16,12 @@
 // utils
 std::wstring fs::widen(const std::string &utf8)
 {
-    return std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().from_bytes(utf8);
+    return std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(utf8);
 }
 
-std::string fs::narrow(const std::wstring &utf16)
+std::string fs::narrow(const std::wstring &wstr)
 {
-    return std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>().to_bytes(utf16);
+    return std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(wstr);
 }
 
 std::string fs::prune(std::string dir)

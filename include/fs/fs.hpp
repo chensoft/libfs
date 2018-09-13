@@ -31,11 +31,11 @@ namespace fs
     // utils
     // -------------------------------------------------------------------------
 
-    // UTF-8 to UTF-16
+    // utf-8 to wstring
     std::wstring widen(const std::string &utf8);
 
-    // UTF-16 to UTF-8
-    std::string narrow(const std::wstring &utf16);
+    // wstring to utf-8
+    std::string narrow(const std::wstring &wstr);
 
     // Remove the separator at the end
     std::string prune(std::string dir);
