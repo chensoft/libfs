@@ -73,19 +73,21 @@ TEST_CASE("fs.split")
 
     SECTION("dirname")
     {
-//        CHECK(fs::dirname(".").empty());
-//        CHECK(fs::dirname("./usr") == ".");
-//        CHECK(fs::dirname("/usr/.") == "/usr");
-//        CHECK(fs::dirname("/usr/") == "/");
-//        CHECK(fs::dirname("/usr///") == "/");
-//        CHECK(fs::dirname("/") == "/");
-//        CHECK(fs::dirname("file.txt") == ".");
-//        CHECK(fs::dirname("/home/staff/Downloads/file.txt") == "/home/staff/Downloads");
-//
-//        CHECK(fs::dirname("C:\\Windows\\System32") == "C:\\Windows");
-//        CHECK(fs::dirname("C:\\Windows\\System32\\cmd.exe") == "C:\\Windows\\System32");
-//        CHECK(fs::dirname("C:\\\\") == "C:\\");
-//        CHECK(fs::dirname("C:\\") == "C:\\");
+        CHECK(fs::dirname(".").empty());
+        CHECK(fs::dirname("./usr") == ".");
+        CHECK(fs::dirname("/usr") == "/");
+        CHECK(fs::dirname("/usr/") == "/");
+        CHECK(fs::dirname("/usr/.") == "/usr");
+        CHECK(fs::dirname("/usr///") == "/");
+        CHECK(fs::dirname("/") == "/");
+        CHECK(fs::dirname("//") == "/");
+        CHECK(fs::dirname("file.txt") == "");
+        CHECK(fs::dirname("/home/staff/Downloads/file.txt") == "/home/staff/Downloads");
+
+        CHECK(fs::dirname("C:\\Windows\\System32") == "C:\\Windows");
+        CHECK(fs::dirname("C:\\Windows\\System32\\cmd.exe") == "C:\\Windows\\System32");
+        CHECK(fs::dirname("C:\\\\") == "C:\\");
+        CHECK(fs::dirname("C:\\") == "C:\\");
     }
 
     ////

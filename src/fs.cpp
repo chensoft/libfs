@@ -157,15 +157,12 @@ void fs::tokenize(const std::string &path, const std::function<void (std::string
     }
 }
 
-std::string fs::dirname(std::string path)
+std::string fs::dirname(const std::string &path)
 {
-    path = fs::prune(std::move(path));
-
-    if (fs::drive(path) == path)
-        return path;
-
-    auto pos = path.find_last_of(fs::seps());
-    return pos != std::string::npos ? path.substr(0, pos) : "";
+    auto drv = fs::drive(path).size();
+    auto end = path.find_last_not_of(fs::seps());
+    auto pos = path.find_last_of(fs::seps(), end - 1);
+    return path.substr(0, pos == std::string::npos ? drv : (std::max)(pos, drv));
 }
 
 //std::string fs::basename(const std::string &path, bool with_ext)

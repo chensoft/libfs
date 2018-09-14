@@ -81,7 +81,7 @@ namespace fs
     // e.g: "/usr/local" -> "/"
     // e.g: "C:\Windows\System32" -> "C:\"
     // @note support both Unix & Windows path on any platform
-    std::string drive(const std::string &path);
+    std::string drive(const std::string &path);  // todo consider return std size_t, most place doesn't need string
 
     // -------------------------------------------------------------------------
     // split
@@ -144,11 +144,13 @@ namespace fs
     // Unix:
     // e.g: "." -> ""
     // e.g: "./usr" -> "."
-    // e.g: "/usr/." -> "/usr", because "." is represent current directory
+    // e.g: "/usr" -> "/"
     // e.g: "/usr/" -> "/", not "/usr", because single "/" isn't a effective name
+    // e.g: "/usr/." -> "/usr"
     // e.g: "/usr///" -> "/", because the trailing slash will be ignored
     // e.g: "/" -> "/", because it's already the root directory
-    // e.g: "file.txt" -> ".", because it's a relative path
+    // e.g: "//" -> "/", because it's already the root directory
+    // e.g: "file.txt" -> ""
     // e.g: "/home/staff/Downloads/file.txt" -> "/home/staff/Downloads"
     // Windows:
     // e.g: "C:\Windows\System32" -> "C:\Windows"
@@ -156,7 +158,7 @@ namespace fs
     // e.g: "C:\\" -> "C:\"
     // e.g: "C:\" -> "C:\"
     // @note support both Unix & Windows path on any platform
-    std::string dirname(std::string path);
+    std::string dirname(const std::string &path);
 
 //    // Base name of the path
 //    // Unix:
