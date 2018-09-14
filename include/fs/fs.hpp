@@ -76,10 +76,10 @@ namespace fs
     std::vector<std::string> drives();
 
     // Get path's mount point or drive
-    // e.g: "C:\Windows\System32" -> "C:\"
-    // e.g: "/usr/local" -> "/"
-    // e.g: "file.txt" -> ""
     // e.g: "" -> ""
+    // e.g: "file.txt" -> ""
+    // e.g: "/usr/local" -> "/"
+    // e.g: "C:\Windows\System32" -> "C:\"
     // @note support both Unix & Windows path on any platform
     std::string drive(const std::string &path);
 
@@ -91,7 +91,7 @@ namespace fs
     // *) will expand the beginning '~'
     // *) will change relative path to absolute
     // *) will remove ".", ".." and duplicate separators
-    std::string realpath(const std::string &path);  // todo some func's string can not be an constant
+    std::string realpath(std::string path);
 
     // Normalize the path, does not expand the symbolic link
     // *) will expand the beginning '~'
@@ -115,7 +115,7 @@ namespace fs
     // e.g: "" -> ""
     // e.g: "~" -> fs::home()
     // e.g: "~/go" -> fs::home() + "/go"
-    // e.g: "~xxx" -> "~xxx"
+    // e.g: "~xxx" -> "~xxx" because ~ is part of the name
     std::string expand(std::string path);
 
     // todo expand variables

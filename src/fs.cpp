@@ -62,6 +62,7 @@ std::string fs::seps()
 
 std::string fs::drive(const std::string &path)
 {
+    // `isAbsolute` has same code
     if (path.empty())
         return "";
 
@@ -174,19 +175,26 @@ void fs::tokenize(const std::string &path, const std::function<void (std::string
 //    auto pos = path.find_last_of('.');
 //    return pos != std::string::npos ? path.substr(with_dot ? pos : pos + 1) : "";
 //}
-//
-//// -----------------------------------------------------------------------------
-//// type
-//bool fs::isAbsolute(const std::string &path)
-//{
-//    return !fs::drive(path).empty();
-//}
-//
-//bool fs::isRelative(const std::string &path)
-//{
-//    return !fs::isAbsolute(path);
-//}
-//
+
+// -----------------------------------------------------------------------------
+// type
+bool fs::isAbsolute(const std::string &path)
+{
+    // `drive` has same code
+    if (path.empty())
+        return false;
+
+    if (path.front() == '/')
+        return true;
+
+    return path.size() >= 3 && std::isalpha(path[0]) && path[1] == ':' && path[2] == '\\';
+}
+
+bool fs::isRelative(const std::string &path)
+{
+    return !fs::isAbsolute(path);
+}
+
 //// -----------------------------------------------------------------------------
 //// operation
 //fs::status fs::rename(const std::string &path_old, const std::string &path_new)

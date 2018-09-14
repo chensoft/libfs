@@ -24,10 +24,10 @@ TEST_CASE("fs.path")
 
         CHECK(!fs::drives().empty());
 
-        CHECK(fs::drive("C:\\Windows\\System32") == "C:\\");
-        CHECK(fs::drive("/usr/local") == "/");
-        CHECK(fs::drive("file.txt").empty());
         CHECK(fs::drive("").empty());
+        CHECK(fs::drive("file.txt").empty());
+        CHECK(fs::drive("/usr/local") == "/");
+        CHECK(fs::drive("C:\\Windows\\System32") == "C:\\");
     }
 
     SECTION("unix")

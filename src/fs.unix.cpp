@@ -75,19 +75,19 @@ std::vector<std::string> fs::drives()
     return {"/"};
 }
 
-//// -----------------------------------------------------------------------------
-//// split
-//std::string fs::realpath(const std::string &path)
-//{
-//    // todo optimize add function visit path's segments
-//    char buf[PATH_MAX];  // todo use std::string(xxx, '\0')
-//
-//    if (::realpath(path.c_str(), buf))
-//        return buf;
-//
-//    return fs::isRelative(path) ? fs::cwd() + fs::sep() + fs::normalize(path) : fs::normalize(path);
-//}
-//
+// -----------------------------------------------------------------------------
+// split
+std::string fs::realpath(std::string path)
+{
+    path = fs::normalize(std::move(path));
+
+    if (fs::isRelative(path))
+        path.replace(0, 0, fs::cwd() + fs::sep());
+
+    char buf[PATH_MAX];
+    return ::realpath(path.c_str(), buf) ? buf : path;
+}
+
 //// -----------------------------------------------------------------------------
 //// check
 //bool fs::isExist(const std::string &path, bool follow_symlink)

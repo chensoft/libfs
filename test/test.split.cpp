@@ -9,63 +9,68 @@
 
 TEST_CASE("fs.split")
 {
-    CHECK(fs::normalize("").empty());
-    CHECK(fs::normalize("~") == fs::home());
-    CHECK(fs::normalize("./a") == "a");
-    CHECK(fs::normalize("a/.") == "a");
-    CHECK(fs::normalize("a/./b") == "a/b");
-    CHECK(fs::normalize("a///b") == "a/b");
-    CHECK(fs::normalize("a/.../b") == "a/.../b");  // this is a invalid path
-    CHECK(fs::normalize("a/../../b") == "../b");   // the second .. don't know how to removed
-    CHECK(fs::normalize("a/b/..") == "a");
-    CHECK(fs::normalize("a/../b") == "b");
-    CHECK(fs::normalize("/..") == "/");
+    SECTION("realpath")
+    {
+        CHECK(!fs::realpath("~").empty());
+        CHECK(fs::realpath("~") == fs::realpath(fs::home()));
+        CHECK(fs::realpath("relative") == fs::realpath(fs::cwd() + fs::sep() + "relative"));  // cwd maybe a symbolic link
+    }
 
-    CHECK(fs::normalize("C:\\a") == "C:\\a");
-    CHECK(fs::normalize("C:\\.\\a") == "C:\\a");
-    CHECK(fs::normalize("C:\\a\\...\\b") == "C:\\a\\...\\b");
-    CHECK(fs::normalize("C:\\a\\..\\..\\b") == "C:\\b");
-    CHECK(fs::normalize("C:\\a\\..\\b") == "C:\\b");
+    SECTION("normalize")
+    {
+        CHECK(fs::normalize("").empty());
+        CHECK(fs::normalize("~") == fs::home());
+        CHECK(fs::normalize("./a") == "a");
+        CHECK(fs::normalize("a/.") == "a");
+        CHECK(fs::normalize("a/./b") == "a/b");
+        CHECK(fs::normalize("a///b") == "a/b");
+        CHECK(fs::normalize("a/.../b") == "a/.../b");  // this is a invalid path
+        CHECK(fs::normalize("a/../../b") == "../b");   // the second .. don't know how to removed
+        CHECK(fs::normalize("a/b/..") == "a");
+        CHECK(fs::normalize("a/../b") == "b");
+        CHECK(fs::normalize("/..") == "/");
 
-    CHECK(fs::expand("").empty());
-    CHECK(fs::expand("~") == fs::home());
-    CHECK(fs::expand("~/go") == fs::home() + "/go");
-    CHECK(fs::expand("~xxx") == "~xxx");
+        CHECK(fs::normalize("C:\\a") == "C:\\a");
+        CHECK(fs::normalize("C:\\.\\a") == "C:\\a");
+        CHECK(fs::normalize("C:\\a\\...\\b") == "C:\\a\\...\\b");
+        CHECK(fs::normalize("C:\\a\\..\\..\\b") == "C:\\b");
+        CHECK(fs::normalize("C:\\a\\..\\b") == "C:\\b");
+    }
 
-    typedef std::vector<std::string> tokenize_type;
+    SECTION("expand")
+    {
+        CHECK(fs::expand("").empty());
+        CHECK(fs::expand("~") == fs::home());
+        CHECK(fs::expand("~/go") == fs::home() + "/go");
+        CHECK(fs::expand("~xxx") == "~xxx");
+    }
 
-    auto tokenize = [] (const std::string &path) {
-        tokenize_type ret;
-        fs::tokenize(path, [&] (std::string component, char separator) {
-            ret.emplace_back(std::move(component));
-            ret.emplace_back(separator ? 1 : 0, separator);
-        });
-        return ret;
-    };
+    SECTION("tokenize")
+    {
+        typedef std::vector<std::string> tokenize_type;
 
-    CHECK(tokenize("") == tokenize_type({"", ""}));
-    CHECK(tokenize("/") == tokenize_type({"/", ""}));
-    CHECK(tokenize("usr") == tokenize_type({"", "", "usr", ""}));
-    CHECK(tokenize("/usr") == tokenize_type({"/", "", "usr", ""}));
-    CHECK(tokenize("/usr/bin") == tokenize_type({"/", "", "usr", "/", "bin", ""}));
-    CHECK(tokenize("/usr/bin/") == tokenize_type({"/", "", "usr", "/", "bin", "/"}));
-    CHECK(tokenize("/usr///bin") == tokenize_type({"/", "", "usr", "/", "bin", ""}));
-    CHECK(tokenize("C:\\") == tokenize_type({"C:\\", ""}));
-    CHECK(tokenize("C:\\Windows") == tokenize_type({"C:\\", "", "Windows", ""}));
-    CHECK(tokenize("C:\\Windows/System32") == tokenize_type({"C:\\", "", "Windows", "/", "System32", ""}));
-    CHECK(tokenize("C:\\Windows\\/System32") == tokenize_type({"C:\\", "", "Windows", "\\", "System32", ""}));
+        auto tokenize = [] (const std::string &path) {
+            tokenize_type ret;
+            fs::tokenize(path, [&] (std::string component, char separator) {
+                ret.emplace_back(std::move(component));
+                ret.emplace_back(separator ? 1 : 0, separator);
+            });
+            return ret;
+        };
 
-    // todo rename source, target to others
-    //        auto source = fs::tmp() + fs::sep() + fs::uuid();  // todo check others do not write multiple file names
-    //        auto target = fs::tmp() + fs::sep() + fs::uuid();
-    //
-    //        CHECK(fs::mkdir(source));
-    //        CHECK(fs::symlink(source, target));
-    //        CHECK(fs::isSymlink(target));
-    //        CHECK(fs::realpath(target) == fs::realpath(source));
-    //        CHECK(fs::realpath("relative") == fs::cwd() + fs::sep() + "relative");
-    //
-    //
+        CHECK(tokenize("") == tokenize_type({"", ""}));
+        CHECK(tokenize("/") == tokenize_type({"/", ""}));
+        CHECK(tokenize("usr") == tokenize_type({"", "", "usr", ""}));
+        CHECK(tokenize("/usr") == tokenize_type({"/", "", "usr", ""}));
+        CHECK(tokenize("/usr/bin") == tokenize_type({"/", "", "usr", "/", "bin", ""}));
+        CHECK(tokenize("/usr/bin/") == tokenize_type({"/", "", "usr", "/", "bin", "/"}));
+        CHECK(tokenize("/usr///bin") == tokenize_type({"/", "", "usr", "/", "bin", ""}));
+        CHECK(tokenize("C:\\") == tokenize_type({"C:\\", ""}));
+        CHECK(tokenize("C:\\Windows") == tokenize_type({"C:\\", "", "Windows", ""}));
+        CHECK(tokenize("C:\\Windows/System32") == tokenize_type({"C:\\", "", "Windows", "/", "System32", ""}));
+        CHECK(tokenize("C:\\Windows\\/System32") == tokenize_type({"C:\\", "", "Windows", "\\", "System32", ""}));
+    }
+
     ////        CHECK(fs::dirname("").empty());
     ////        CHECK(fs::dirname(".").empty());
     ////        CHECK(fs::dirname("./usr") == ".");
