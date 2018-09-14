@@ -24,9 +24,11 @@ std::string fs::narrow(const std::wstring &wstr)
     return std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(wstr);
 }
 
-std::string fs::prune(std::string dir)
+std::string fs::prune(std::string dir, const std::string &drv)
 {
-    dir.erase(std::find_if(dir.rbegin(), dir.rend(), [] (char c) {
+    auto len = !drv.empty() ? drv.size() : fs::drive(dir).size();
+
+    dir.erase(std::find_if(dir.rbegin(), dir.rend() - len, [=] (char c) {
         return fs::seps().find(c) == std::string::npos;
     }).base(), dir.end());
 
@@ -116,7 +118,7 @@ std::string fs::normalize(std::string path)
             ret += separator;
     });
 
-    return ret == drv ? ret : fs::prune(std::move(ret));
+    return fs::prune(std::move(ret), drv);
 }
 
 std::string fs::expand(std::string path)
@@ -155,14 +157,17 @@ void fs::tokenize(const std::string &path, const std::function<void (std::string
     }
 }
 
-//std::string fs::dirname(const std::string &path)
-//{
-//    // todo optimize
-//    // todo how to handle drive 'C:\Windows'
-//    auto pos = path.find_last_of("/\\");
-//    return pos != std::string::npos ? path.substr(0, pos) : "";
-//}
-//
+std::string fs::dirname(std::string path)
+{
+    path = fs::prune(std::move(path));
+
+    if (fs::drive(path) == path)
+        return path;
+
+    auto pos = path.find_last_of(fs::seps());
+    return pos != std::string::npos ? path.substr(0, pos) : "";
+}
+
 //std::string fs::basename(const std::string &path, bool with_ext)
 //{
 //    auto pos = path.find_last_of("/\\");

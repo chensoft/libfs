@@ -37,8 +37,8 @@ namespace fs
     // wstring to utf-8
     std::string narrow(const std::wstring &wstr);
 
-    // Remove the separator at the end
-    std::string prune(std::string dir);
+    // Remove the separator at the end, preserve drive
+    std::string prune(std::string dir, const std::string &drv = "");
 
     // -------------------------------------------------------------------------
     // path
@@ -140,24 +140,24 @@ namespace fs
     // @note support both Unix & Windows path on any platform
     void tokenize(const std::string &path, const std::function<void (std::string component, char separator)> &callback);
 
-//    // Directory name of the path, without the trailing slash
-//    // Unix:
-//    // e.g: "." -> ""
-//    // e.g: "./usr" -> "."
-//    // e.g: "/usr/." -> "/usr", because "." is represent current directory
-//    // e.g: "/usr/" -> "/", not "/usr", because single "/" isn't a effective name
-//    // e.g: "/usr///" -> "/", because the trailing slash will be ignored
-//    // e.g: "/" -> "/", because it's already the root directory
-//    // e.g: "file.txt" -> ".", because it's a relative path
-//    // e.g: "/home/staff/Downloads/file.txt" -> "/home/staff/Downloads"
-//    // Windows:
-//    // e.g: "C:\Windows\System32" -> "C:\Windows"
-//    // e.g: "C:\Windows\System32\cmd.exe" -> "C:\Windows\System32"
-//    // e.g: "C:\\" -> "C:\"
-//    // e.g: "C:\" -> "C:\"
-//    // @note support both Unix & Windows path on any platform
-//    std::string dirname(const std::string &path);
-//
+    // Directory name of the path, without the trailing slash
+    // Unix:
+    // e.g: "." -> ""
+    // e.g: "./usr" -> "."
+    // e.g: "/usr/." -> "/usr", because "." is represent current directory
+    // e.g: "/usr/" -> "/", not "/usr", because single "/" isn't a effective name
+    // e.g: "/usr///" -> "/", because the trailing slash will be ignored
+    // e.g: "/" -> "/", because it's already the root directory
+    // e.g: "file.txt" -> ".", because it's a relative path
+    // e.g: "/home/staff/Downloads/file.txt" -> "/home/staff/Downloads"
+    // Windows:
+    // e.g: "C:\Windows\System32" -> "C:\Windows"
+    // e.g: "C:\Windows\System32\cmd.exe" -> "C:\Windows\System32"
+    // e.g: "C:\\" -> "C:\"
+    // e.g: "C:\" -> "C:\"
+    // @note support both Unix & Windows path on any platform
+    std::string dirname(std::string path);
+
 //    // Base name of the path
 //    // Unix:
 //    // e.g: "/home/staff/Downloads/file.txt" -> "file.txt"
