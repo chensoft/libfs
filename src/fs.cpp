@@ -159,24 +159,28 @@ void fs::tokenize(const std::string &path, const std::function<void (std::string
 
 std::string fs::dirname(const std::string &path)
 {
+    // todo use std find if, limit beg and end range
     auto drv = fs::drive(path).size();
     auto end = path.find_last_not_of(fs::seps());
-    auto pos = path.find_last_of(fs::seps(), end - 1);
+    auto pos = path.find_last_of(fs::seps(), end == std::string::npos ? end : end - 1);
     return path.substr(0, pos == std::string::npos ? drv : (std::max)(pos, drv));
 }
 
-//std::string fs::basename(const std::string &path, bool with_ext)
-//{
-//    auto pos = path.find_last_of("/\\");
-//    auto ext = !with_ext ? fs::extname(path) : "";
-//    return pos != std::string::npos ? path.substr(pos + 1, !ext.empty() ? path.size() - pos - 1 - ext.size() : std::string::npos) : path;  // todo use *c_str instead empty
-//}
-//
-//std::string fs::extname(const std::string &path, bool with_dot)
-//{
-//    auto pos = path.find_last_of('.');
-//    return pos != std::string::npos ? path.substr(with_dot ? pos : pos + 1) : "";
-//}
+std::string fs::basename(const std::string &path, bool with_ext)
+{
+    // todo use std find if, limit beg and end range
+    auto drv = fs::drive(path).size();
+    auto end = (std::max)(path.find_last_not_of(fs::seps()), drv - 1);
+    auto pos = path.find_last_of(fs::seps(), end == std::string::npos ? end : end - 1);
+    auto ret = path.substr(pos == std::string::npos ? drv : pos + 1, end == std::string::npos ? end : end + 1 - drv);
+    return !with_ext ? ret.erase(ret.rfind('.')), ret : ret;
+}
+
+std::string fs::extname(const std::string &path, bool with_dot)
+{
+    auto pos = path.rfind('.');
+    return pos != std::string::npos ? path.substr(with_dot ? pos : pos + 1) : "";
+}
 
 // -----------------------------------------------------------------------------
 // type

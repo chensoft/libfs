@@ -144,44 +144,46 @@ namespace fs
     // Unix:
     // e.g: "." -> ""
     // e.g: "./usr" -> "."
+    // e.g: "/" -> "/", because it's already the root directory
+    // e.g: "//" -> "/", because it's already the root directory
     // e.g: "/usr" -> "/"
     // e.g: "/usr/" -> "/", not "/usr", because single "/" isn't a effective name
     // e.g: "/usr/." -> "/usr"
     // e.g: "/usr///" -> "/", because the trailing slash will be ignored
-    // e.g: "/" -> "/", because it's already the root directory
-    // e.g: "//" -> "/", because it's already the root directory
-    // e.g: "file.txt" -> ""
     // e.g: "/home/staff/Downloads/file.txt" -> "/home/staff/Downloads"
     // Windows:
+    // e.g: "C:\" -> "C:\"
+    // e.g: "C:\\" -> "C:\"
     // e.g: "C:\Windows\System32" -> "C:\Windows"
     // e.g: "C:\Windows\System32\cmd.exe" -> "C:\Windows\System32"
-    // e.g: "C:\\" -> "C:\"
-    // e.g: "C:\" -> "C:\"
     // @note support both Unix & Windows path on any platform
     std::string dirname(const std::string &path);
 
-//    // Base name of the path
-//    // Unix:
-//    // e.g: "/home/staff/Downloads/file.txt" -> "file.txt"
-//    // e.g: "/home/" -> "home"
-//    // e.g: "/" -> ""
-//    // e.g: "file.txt" -> "file.txt"
-//    // Windows:
-//    // e.g: "C:\Windows\System32\cmd.exe" -> "cmd.exe"
-//    // e.g: "C:\" -> ""
-//    // @note support both Unix & Windows path on any platform
-//    std::string basename(const std::string &path, bool with_ext = true);
-//
-//    // Extension name of the path
-//    // Unix:
-//    // e.g: "/home/staff/Downloads/file.txt" -> ".txt"
-//    // e.g: "/home/" -> ""
-//    // e.g: "/" -> ""
-//    // Windows:
-//    // e.g: "C:\Windows\System32\cmd.exe" -> ".exe"
-//    // e.g: "C:\" -> ""
-//    // @note support both Unix & Windows path on any platform
-//    std::string extname(const std::string &path, bool with_dot = true);
+    // Base name of the path
+    // Unix:
+    // e.g: "file.txt" -> "file.txt"
+    // e.g: "/" -> ""
+    // e.g: "//" -> ""
+    // e.g: "/home/" -> "home"
+    // e.g: "/home/staff/Downloads/file.txt" -> "file.txt"
+    // Windows:
+    // e.g: "C:\" -> ""
+    // e.g: "C:\\" -> ""
+    // e.g: "C:\Windows\System32\cmd.exe" -> "cmd.exe"
+    // @note support both Unix & Windows path on any platform
+    std::string basename(const std::string &path, bool with_ext = true);
+
+    // Extension name of the path
+    // Unix:
+    // e.g: "file.txt" -> ".txt"
+    // e.g: "/" -> ""
+    // e.g: "/home/" -> ""
+    // e.g: "/home/staff/Downloads/file.txt" -> ".txt"
+    // Windows:
+    // e.g: "C:\" -> ""
+    // e.g: "C:\Windows\System32\cmd.exe" -> ".exe"
+    // @note support both Unix & Windows path on any platform
+    std::string extname(const std::string &path, bool with_dot = true);
 
     // -------------------------------------------------------------------------
     // check
