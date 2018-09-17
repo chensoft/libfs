@@ -75,13 +75,13 @@ namespace fs
     // @result "/" on Unix, "C", "D" ... on Windows
     std::vector<std::string> drives();
 
-    // Get path's mount point or drive
+    // Get path's mount point or drive size
     // e.g: "" -> ""
     // e.g: "file.txt" -> ""
     // e.g: "/usr/local" -> "/"
     // e.g: "C:\Windows\System32" -> "C:\"
     // @note support both Unix & Windows path on any platform
-    std::string drive(const std::string &path);  // todo consider return std size_t, most place doesn't need string
+    std::size_t drive(const std::string &path);
 
     // -------------------------------------------------------------------------
     // split

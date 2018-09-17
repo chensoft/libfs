@@ -26,7 +26,7 @@ std::string fs::narrow(const std::wstring &wstr)
 
 std::string fs::prune(std::string dir, const std::string &drv)
 {
-    auto len = !drv.empty() ? drv.size() : fs::drive(dir).size();
+    auto len = !drv.empty() ? drv.size() : fs::drive(dir);
 
     dir.erase(std::find_if(dir.rbegin(), dir.rend() - len, [=] (char c) {
         return fs::seps().find(c) == std::string::npos;
@@ -62,16 +62,16 @@ std::string fs::seps()
     return "/\\";
 }
 
-std::string fs::drive(const std::string &path)
+std::size_t fs::drive(const std::string &path)
 {
     // `isAbsolute` has same code
     if (path.empty())
-        return "";
+        return 0;
 
     if (path.front() == '/')
-        return "/";
+        return 1;
 
-    return path.size() >= 3 && std::isalpha(path[0]) && path[1] == ':' && path[2] == '\\' ? path.substr(0, 3) : "";
+    return path.size() >= 3 && std::isalpha(path[0]) && path[1] == ':' && path[2] == '\\' ? 3 : 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -129,13 +129,13 @@ std::string fs::expand(std::string path)
 
 void fs::tokenize(const std::string &path, const std::function<void (std::string component, char separator)> &callback)
 {
-    std::string drive(fs::drive(path));
+    std::size_t drive(fs::drive(path));
     std::string delim(fs::seps());
 
     // handle drive letter first
-    callback(drive, '\0');
+    callback(path.substr(0, drive), '\0');
 
-    const char *beg = path.c_str() + drive.size();
+    const char *beg = path.c_str() + drive;
     const char *end = nullptr;
     const char *cur = beg;
 
@@ -159,7 +159,7 @@ void fs::tokenize(const std::string &path, const std::function<void (std::string
 
 std::string fs::dirname(const std::string &path)
 {
-    auto drv = fs::drive(path).size();
+    auto drv = fs::drive(path);
     auto end = std::find_if(path.rbegin(), path.rend() - drv, [] (char c) { return fs::seps().find(c) == std::string::npos; });
     auto cur = std::find_if(end, path.rend() - drv, [] (char c) { return fs::seps().find(c) != std::string::npos; });
     return std::string(path.begin(), (std::max)(path.begin() + drv, cur.base() - 1));
@@ -167,7 +167,7 @@ std::string fs::dirname(const std::string &path)
 
 std::string fs::basename(const std::string &path, bool with_ext)
 {
-    auto drv = fs::drive(path).size();
+    auto drv = fs::drive(path);
     auto end = std::find_if(path.rbegin(), path.rend() - drv, [] (char c) { return fs::seps().find(c) == std::string::npos; });
     auto cur = std::find_if(end, path.rend() - drv, [] (char c) { return fs::seps().find(c) != std::string::npos; });
     auto ext = with_ext ? cur : std::find(end, cur, '.');
