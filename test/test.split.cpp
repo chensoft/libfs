@@ -25,7 +25,7 @@ TEST_CASE("fs.split")
         CHECK(fs::normalize("a/./b") == "a/b");
         CHECK(fs::normalize("a///b") == "a/b");
         CHECK(fs::normalize("a/.../b") == "a/.../b");  // this is a invalid path
-        CHECK(fs::normalize("a/../../b") == "../b");   // the second .. don't know how to removed
+        CHECK(fs::normalize("a/../../b") == "../b");
         CHECK(fs::normalize("a/b/..") == "a");
         CHECK(fs::normalize("a/../b") == "b");
         CHECK(fs::normalize("/..") == "/");
@@ -91,29 +91,59 @@ TEST_CASE("fs.split")
 
     SECTION("basename")
     {
+        // with ext
+        CHECK(fs::basename("file") == "file");
         CHECK(fs::basename("file.txt") == "file.txt");
-        CHECK(fs::basename("file.txt", false) == "file");
 
         CHECK(fs::basename("/").empty());
         CHECK(fs::basename("//").empty());
         CHECK(fs::basename("/home/") == "home");
+        CHECK(fs::basename("/home/staff/vm.box/debian") == "debian");
         CHECK(fs::basename("/home/staff/Downloads/file.txt") == "file.txt");
 
         CHECK(fs::basename("C:\\").empty());
         CHECK(fs::basename("C:\\\\").empty());
         CHECK(fs::basename("C:\\Windows\\System32\\cmd.exe") == "cmd.exe");
+
+        // without ext
+        CHECK(fs::basename("file", false) == "file");
+        CHECK(fs::basename("file.txt", false) == "file");
+
+        CHECK(fs::basename("/", false).empty());
+        CHECK(fs::basename("//", false).empty());
+        CHECK(fs::basename("/home/", false) == "home");
+        CHECK(fs::basename("/home/staff/vm.box/debian", false) == "debian");
+        CHECK(fs::basename("/home/staff/Downloads/file.txt", false) == "file");
+
+        CHECK(fs::basename("C:\\", false).empty());
+        CHECK(fs::basename("C:\\\\", false).empty());
+        CHECK(fs::basename("C:\\Windows\\System32\\cmd.exe", false) == "cmd");
     }
 
     SECTION("extname")
     {
+        // with dot
+        CHECK(fs::extname("file").empty());
         CHECK(fs::extname("file.txt") == ".txt");
-        CHECK(fs::extname("file.txt", false) == "txt");
 
         CHECK(fs::extname("/").empty());
         CHECK(fs::extname("/home/").empty());
+        CHECK(fs::extname("/home/staff/vm.box/debian").empty());
         CHECK(fs::extname("/home/staff/Downloads/file.txt") == ".txt");
 
         CHECK(fs::extname("C:\\").empty());
         CHECK(fs::extname("C:\\Windows\\System32\\cmd.exe") == ".exe");
+
+        // without dot
+        CHECK(fs::extname("file", false).empty());
+        CHECK(fs::extname("file.txt", false) == "txt");
+
+        CHECK(fs::extname("/", false).empty());
+        CHECK(fs::extname("/home/", false).empty());
+        CHECK(fs::extname("/home/staff/vm.box/debian", false).empty());
+        CHECK(fs::extname("/home/staff/Downloads/file.txt", false) == "txt");
+
+        CHECK(fs::extname("C:\\", false).empty());
+        CHECK(fs::extname("C:\\Windows\\System32\\cmd.exe", false) == "exe");
     }
 }

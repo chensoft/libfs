@@ -99,10 +99,10 @@ namespace fs
     // Unix:
     // e.g: "./a" -> "a", "a/." -> "a", "a/./b" -> "a/b", "a///b" -> "a/b"
     // e.g: "a/.../b" -> "a/.../b" because the "..." is invalid path characters, it will be ignored
-    // e.g: "a/../../b" -> "../b" because the path is relative and second ".." can't be removed
+    // e.g: "a/../../b" -> "../b" because the path is relative so the second ".." can't be removed
     // e.g: "a/../b" -> "b"
     // e.g: "a/b/.." -> "a"
-    // e.g: "/.." -> "/"
+    // e.g: "/.." -> "/" because "/" is the root path
     // Windows:
     // e.g: "C:\a" -> "C:\a", "C:\.\a" -> "C:\a"
     // e.g: "C:\a\...\b" -> "C:\a\...\b"
@@ -140,14 +140,14 @@ namespace fs
     // @note support both Unix & Windows path on any platform
     void tokenize(const std::string &path, const std::function<void (std::string component, char separator)> &callback);
 
-    // Directory name of the path, without the trailing slash
+    // Directory name of the path, without the trailing separator
     // Unix:
     // e.g: "." -> ""
     // e.g: "./usr" -> "."
     // e.g: "/" -> "/", because it's already the root directory
     // e.g: "//" -> "/", because it's already the root directory
     // e.g: "/usr" -> "/"
-    // e.g: "/usr/" -> "/", not "/usr", because single "/" isn't a effective name
+    // e.g: "/usr/" -> "/", because single "/" isn't a effective name
     // e.g: "/usr/." -> "/usr"
     // e.g: "/usr///" -> "/", because the trailing slash will be ignored
     // e.g: "/home/staff/Downloads/file.txt" -> "/home/staff/Downloads"
@@ -161,10 +161,12 @@ namespace fs
 
     // Base name of the path
     // Unix:
+    // e.g: "file" -> "file"
     // e.g: "file.txt" -> "file.txt"
     // e.g: "/" -> ""
     // e.g: "//" -> ""
     // e.g: "/home/" -> "home"
+    // e.g: "/home/staff/vm.box/debian" -> "debian"
     // e.g: "/home/staff/Downloads/file.txt" -> "file.txt"
     // Windows:
     // e.g: "C:\" -> ""
@@ -175,9 +177,11 @@ namespace fs
 
     // Extension name of the path
     // Unix:
+    // e.g: "file" -> ""
     // e.g: "file.txt" -> ".txt"
     // e.g: "/" -> ""
     // e.g: "/home/" -> ""
+    // e.g: "/home/staff/vm.box/debian" -> ""
     // e.g: "/home/staff/Downloads/file.txt" -> ".txt"
     // Windows:
     // e.g: "C:\" -> ""
