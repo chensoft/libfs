@@ -9,55 +9,56 @@
 
 TEST_CASE("fs.check")
 {
-//        // todo can move to test.cpp
-//        {
-//            auto tmp = fs::tmp() + "/" + fs::uuid();
-//
-//            CHECK(fs::mkdir(tmp));
-//            CHECK(fs::mkdir(tmp + "/folder"));
-//            CHECK(fs::touch(tmp + "/file.txt"));
-//            CHECK(fs::symlink(tmp + "/file.txt", tmp + "/exist.txt"));
-//            CHECK(fs::symlink(tmp + "/folder", tmp + "/directory"));
-//            CHECK(fs::touch(tmp + "/dummy.txt"));
-//            CHECK(fs::symlink(tmp + "/dummy.txt", tmp + "/broken.txt"));
-//            CHECK(fs::remove(tmp + "/dummy.txt"));
-//
-//            CHECK(fs::isExist(tmp));
-//            CHECK(fs::isExist(tmp, false));
-//            CHECK(fs::isExist(tmp + "/file.txt"));
-//            CHECK(fs::isExist(tmp + "/file.txt", false));
-//            CHECK(fs::isExist(tmp + "/exist.txt"));
-//            CHECK(fs::isExist(tmp + "/exist.txt", false));
-//            CHECK_FALSE(fs::isExist(tmp + "/broken.txt"));
-//            CHECK(fs::isExist(tmp + "/broken.txt", false));
-//
-//            CHECK(fs::isDir(tmp));
-//            CHECK(fs::isDir(tmp, false));
-//            CHECK(fs::isDir(tmp + "/directory"));
-//            CHECK_FALSE(fs::isDir(tmp + "/directory", false));
-//            CHECK_FALSE(fs::isDir(tmp + "/file.txt"));
-//            CHECK_FALSE(fs::isDir(tmp + "/file.txt", false));
-//
-//            CHECK_FALSE(fs::isFile(tmp));
-//            CHECK(fs::isFile(tmp + "/file.txt"));
-//            CHECK(fs::isFile(tmp + "/exist.txt"));
-//            CHECK_FALSE(fs::isFile(tmp + "/exist.txt", false));
-//
-//            CHECK_FALSE(fs::isSymlink("tmp"));
-//            CHECK(fs::isSymlink(tmp + "/exist.txt"));
-//            CHECK_FALSE(fs::isSymlink(tmp + "/file.txt"));
-//        }
-//
-//        {
-//            auto tmp = fs::tmp() + "/" + fs::uuid();
-//
-//            CHECK(fs::isEmpty(tmp));  // path is not exist now
-//            CHECK(fs::mkdir(tmp));
-//            CHECK(fs::isEmpty(tmp));  // path has no entries
-//            CHECK(fs::touch(tmp + "/file.txt"));
-//            CHECK_FALSE(fs::isEmpty(tmp));
-//            CHECK(fs::isEmpty(tmp + "/file.txt"));
-//            CHECK(fs::write(tmp + "/file.txt", "abc"));
-//            CHECK_FALSE(fs::isEmpty(tmp + "/file.txt"));
-//        }
+    // create
+    auto root = fs::tmp() + fs::sep() + fs::uuid() + fs::sep();
+
+    CHECK(fs::mkdir(root + "dir-real"));
+    CHECK(fs::symlink(root + "dir-real", root + "dir-link"));
+
+    CHECK(fs::touch(root + "file-real"));
+    CHECK(fs::symlink(root + "file-real", root + "file-link"));
+
+    CHECK(fs::touch(root + "file-temp"));
+    CHECK(fs::symlink(root + "file-temp", root + "file-link-missing"));
+    CHECK(fs::remove(root + "file-temp"));
+
+    // exist
+    CHECK(fs::isExist(root + "dir-real"));
+    CHECK(fs::isExist(root + "dir-real", false));
+    CHECK(fs::isExist(root + "dir-link"));
+    CHECK(fs::isExist(root + "dir-link", false));
+    CHECK(fs::isExist(root + "file-real"));
+    CHECK(fs::isExist(root + "file-real", false));
+    CHECK(fs::isExist(root + "file-link"));
+    CHECK(fs::isExist(root + "file-link", false));
+    CHECK_FALSE(fs::isExist(root + "file-temp"));
+    CHECK_FALSE(fs::isExist(root + "file-temp", false));
+    CHECK_FALSE(fs::isExist(root + "file-link-missing"));
+    CHECK(fs::isExist(root + "file-link-missing", false));
+
+    // empty
+    CHECK(fs::isEmpty(root + "file-temp"));
+    CHECK(fs::isEmpty(root + "file-real"));
+    CHECK(fs::write(root + "file-real", "abc"));
+    CHECK_FALSE(fs::isEmpty(root + "file-real"));
+
+    CHECK(fs::isEmpty(root + "dir-real"));
+    CHECK(fs::touch(root + "dir-link" + fs::sep() + "dummy"));
+    CHECK_FALSE(fs::isEmpty(root + "dir-link"));
+
+    // type
+    CHECK(fs::isDir(root + "dir-link"));
+    CHECK_FALSE(fs::isDir(root + "dir-link", false));
+    CHECK_FALSE(fs::isDir(root + "file-real"));
+    CHECK_FALSE(fs::isDir(root + "file-real", false));
+
+    CHECK(fs::isFile(root + "file-link"));
+    CHECK_FALSE(fs::isFile(root + "file-link", false));
+    CHECK_FALSE(fs::isFile(root + "dir-real"));
+    CHECK_FALSE(fs::isFile(root + "dir-real", false));
+
+    CHECK(fs::isSymlink(root + "dir-link"));
+    CHECK(fs::isSymlink(root + "file-link"));
+    CHECK_FALSE(fs::isSymlink(root + "dir-real"));
+    CHECK_FALSE(fs::isSymlink(root + "file-real"));
 }

@@ -64,7 +64,6 @@ std::string fs::seps()
 
 std::size_t fs::drive(const std::string &path)
 {
-    // `isAbsolute` has same code
     if (path.empty())
         return 0;
 
@@ -184,19 +183,12 @@ std::string fs::extname(const std::string &path, bool with_dot)
 // type
 bool fs::isAbsolute(const std::string &path)
 {
-    // `drive` has same code
-    if (path.empty())
-        return false;
-
-    if (path.front() == '/')
-        return true;
-
-    return path.size() >= 3 && std::isalpha(path[0]) && path[1] == ':' && path[2] == '\\';
+    return fs::drive(path) > 0;
 }
 
 bool fs::isRelative(const std::string &path)
 {
-    return !fs::isAbsolute(path);
+    return !fs::drive(path);
 }
 
 //// -----------------------------------------------------------------------------
@@ -267,89 +259,91 @@ bool fs::isRelative(const std::string &path)
 //        return status(::ferror(in.get()));
 //    }
 //}
-//
-//// -----------------------------------------------------------------------------
-//// traversal
-//void fs::visit(const std::string &dir, const std::function<void (const std::string &path)> &callback, bool recursive, VisitStrategy strategy)
-//{
-//    fs::visit(dir, [&] (const std::string &path, bool *) {
-//        callback(path);
-//    }, recursive, strategy);
-//}
-//
-//// -----------------------------------------------------------------------------
-//// IO
-//std::string fs::read(const std::string &file)
-//{
-//    return fs::read(file, 0, fs::filesize(file));
-//}
-//
-//std::string fs::read(const std::string &file, std::size_t start, std::size_t length)
-//{
-//    if (length <= 0)
-//        return "";
-//
-//    std::ifstream in(file, std::ios_base::binary);
-//
-//    if (start)
-//        in.seekg(start);
-//
-//    if (in && !in.eof())
-//    {
-//        std::string ret(length, '\0');
-//        in.read(&ret[0], static_cast<std::streamsize>(length));
-//        ret.resize(static_cast<std::size_t>(in.gcount()));
-//
-//        return ret;
-//    }
-//
-//    return "";
-//}
-//
-//std::vector<std::string> fs::read(const std::string &file, char sep)
-//{
-//    // todo use fopen
-//    std::vector<std::string> ret;
-//    std::ifstream in(file, std::ios_base::binary);
-//    std::string line;
-//
-//    while (std::getline(in, line, sep))
-//        ret.emplace_back(std::move(line));
-//
-//    return ret;
-//}
-//
-//// write
-//fs::status fs::write(const std::string &file, const std::string &data)
-//{
-//    return fs::write(file, data.data(), data.size());
-//}
-//
-//fs::status fs::write(const std::string &file, const void *data, std::size_t size)
-//{
-//    if (!fs::mkdir(fs::dirname(file)))
-//        return status(errno);
-//
-//    std::ofstream out(file, std::ios_base::binary);
-//    if (out)
-//        out.write(static_cast<const char*>(data), size);
-//
-//    return out.good() ? status() : status(errno);
-//}
-//
-//fs::status fs::append(const std::string &file, const std::string &data)
-//{
-//    return fs::append(file, data.data(), data.size());
-//}
-//
-//fs::status fs::append(const std::string &file, const void *data, std::size_t size)
-//{
-//    if (!fs::mkdir(fs::dirname(file)))
-//        return status(errno);
-//
-//    std::ofstream out(file, std::ios_base::binary | std::ios_base::app);
-//    if (out)
-//        out.write(static_cast<const char*>(data), size);
-//
-//    return out.good() ? status() : status(errno);
-//}
+
+// -----------------------------------------------------------------------------
+// traversal
+void fs::visit(const std::string &dir, const std::function<void (const std::string &path)> &callback, bool recursive, VisitStrategy strategy)
+{
+    fs::visit(dir, [&] (const std::string &path, bool *) {
+        callback(path);
+    }, recursive, strategy);
+}
+
+// -----------------------------------------------------------------------------
+// IO
+std::string fs::read(const std::string &file)
+{
+    return fs::read(file, 0, fs::filesize(file));
+}
+
+#include <fstream>  // todo remove
+std::string fs::read(const std::string &file, std::size_t start, std::size_t length)
+{
+    if (length <= 0)
+        return "";
+
+    // todo use unique_ptr + FILE
+    std::ifstream in(file, std::ios_base::binary);
+
+    if (start)
+        in.seekg(start);
+
+    if (in && !in.eof())
+    {
+        std::string ret(length, '\0');
+        in.read(&ret[0], static_cast<std::streamsize>(length));
+        ret.resize(static_cast<std::size_t>(in.gcount()));
+
+        return ret;
+    }
+
+    return "";
+}
+
+std::vector<std::string> fs::read(const std::string &file, char sep)
+{
+    // todo use fopen
+    std::vector<std::string> ret;
+    std::ifstream in(file, std::ios_base::binary);
+    std::string line;
+
+    while (std::getline(in, line, sep))
+        ret.emplace_back(std::move(line));
+
+    return ret;
+}
+
+// write
+fs::status fs::write(const std::string &file, const std::string &data)
+{
+    return fs::write(file, data.data(), data.size());
+}
+
+fs::status fs::write(const std::string &file, const void *data, std::size_t size)
+{
+    if (!fs::mkdir(fs::dirname(file)))
+        return status(errno);
+
+    std::ofstream out(file, std::ios_base::binary);
+    if (out)
+        out.write(static_cast<const char*>(data), size);
+
+    return out.good() ? status() : status(errno);
+}
+
+fs::status fs::append(const std::string &file, const std::string &data)
+{
+    return fs::append(file, data.data(), data.size());
+}
+
+fs::status fs::append(const std::string &file, const void *data, std::size_t size)
+{
+    if (!fs::mkdir(fs::dirname(file)))
+        return status(errno);
+
+    std::ofstream out(file, std::ios_base::binary | std::ios_base::app);
+    if (out)
+        out.write(static_cast<const char*>(data), size);
+
+    return out.good() ? status() : status(errno);
+}
