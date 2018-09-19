@@ -9,13 +9,13 @@
 
 TEST_CASE("fs.type")
 {
-    //        CHECK(fs::isAbsolute("/usr/local"));
-    //        CHECK_FALSE(fs::isAbsolute(""));
-    //        CHECK_FALSE(fs::isAbsolute("file.txt"));
-    //        CHECK(fs::isAbsolute("C:\\Windows\\System32"));
-    //
-    //        CHECK_FALSE(fs::isRelative("/usr/local"));
-    //        CHECK(fs::isRelative(""));
-    //        CHECK(fs::isRelative("file.txt"));
-    //        CHECK_FALSE(fs::isRelative("C:\\Windows\\System32"));
+    CHECK_FALSE(fs::isAbsolute(""));
+    CHECK_FALSE(fs::isAbsolute("file.txt"));
+    CHECK(fs::isAbsolute("/usr/local"));
+    CHECK(fs::isAbsolute("C:\\Windows\\System32"));
+
+    CHECK(fs::isRelative(""));
+    CHECK(fs::isRelative("file.txt"));
+    CHECK_FALSE(fs::isRelative("/usr/local"));
+    CHECK_FALSE(fs::isRelative("C:\\Windows\\System32"));
 }

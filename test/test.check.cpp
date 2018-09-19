@@ -13,13 +13,13 @@ TEST_CASE("fs.check")
     auto root = fs::tmp() + fs::sep() + fs::uuid() + fs::sep();
 
     CHECK(fs::mkdir(root + "dir-real"));
-    CHECK(fs::symlink(root + "dir-real", root + "dir-link"));
+    CHECK(fs::symlink("dir-real", root + "dir-link"));
 
     CHECK(fs::touch(root + "file-real"));
-    CHECK(fs::symlink(root + "file-real", root + "file-link"));
+    CHECK(fs::symlink("file-real", root + "file-link"));
 
     CHECK(fs::touch(root + "file-temp"));
-    CHECK(fs::symlink(root + "file-temp", root + "file-link-missing"));
+    CHECK(fs::symlink("file-temp", root + "file-link-missing"));
     CHECK(fs::remove(root + "file-temp"));
 
     // exist
