@@ -9,18 +9,21 @@
 
 TEST_CASE("fs.property")
 {
-    //        auto tmp = fs::tmp() + fs::sep() + fs::uuid() + "/file.txt";  // todo check others do not write multiple file names
-    //
-    //        CHECK(fs::write(tmp, "abc"));
-    //
-    //        CHECK(fs::touch(tmp, 0, 12345678));
-    //        CHECK(fs::atime(tmp).tv_sec != 12345678);
-    //        CHECK(fs::mtime(tmp).tv_sec == 12345678);
-    //
-    //        CHECK(fs::touch(tmp, 87654321, 12345678));
-    //        CHECK(fs::atime(tmp).tv_sec == 87654321);
-    //        CHECK(fs::mtime(tmp).tv_sec == 12345678);
-    //        CHECK(fs::ctime(tmp).tv_sec > 0);
-    //
-    //        CHECK(fs::filesize(tmp) == 3);
+    auto file = fs::tmp() + fs::sep() + fs::uuid() + fs::sep() + "file.txt";
+
+    CHECK(fs::write(file, "abc"));
+
+    auto time = fs::ctime(file);
+
+    CHECK(fs::touch(file, 0, 12345678));
+    CHECK(fs::atime(file).tv_sec != 12345678);
+    CHECK(fs::mtime(file).tv_sec == 12345678);
+    CHECK(fs::ctime(file).tv_sec == time.tv_sec);
+
+    CHECK(fs::touch(file, 87654321, 12345678));
+    CHECK(fs::atime(file).tv_sec == 87654321);
+    CHECK(fs::mtime(file).tv_sec == 12345678);
+    CHECK(fs::ctime(file).tv_sec == time.tv_sec);
+
+    CHECK(fs::filesize(file) == 3);
 }

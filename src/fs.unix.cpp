@@ -139,64 +139,63 @@ bool fs::isSymlink(const std::string &path)
     return !::lstat(path.c_str(), &st) && S_ISLNK(st.st_mode);
 }
 
-//// -----------------------------------------------------------------------------
-//// mode
-//bool fs::isReadable(const std::string &path)
-//{
-//    return !::access(path.c_str(), R_OK);
-//}
-//
-//bool fs::isWritable(const std::string &path)
-//{
-//    return !::access(path.c_str(), W_OK);
-//}
-//
-//bool fs::isExecutable(const std::string &path)
-//{
-//    return !::access(path.c_str(), X_OK);
-//}
-//
-//// -----------------------------------------------------------------------------
-//// property
-//struct ::timespec fs::atime(const std::string &path)
-//{
-//    struct ::stat st{};
-//    if (::stat(path.c_str(), &st))
-//        return {};
-//
-//    // todo use stat64
-//#ifdef __linux__
-//    return st.st_atim;
-//#else
-//    return st.st_atimespec;
-//#endif
-//}
-//
-//struct ::timespec fs::mtime(const std::string &path)
-//{
-//    struct ::stat st{};
-//    if (::stat(path.c_str(), &st))
-//        return {};
-//
-//#ifdef __linux__
-//    return st.st_mtim;
-//#else
-//    return st.st_mtimespec;
-//#endif
-//}
-//
-//struct ::timespec fs::ctime(const std::string &path)
-//{
-//    struct ::stat st{};
-//    if (::stat(path.c_str(), &st))
-//        return {};
-//
-//#ifdef __linux__
-//    return st.st_ctim;
-//#else
-//    return st.st_ctimespec;
-//#endif
-//}
+// -----------------------------------------------------------------------------
+// mode
+bool fs::isReadable(const std::string &path)
+{
+    return !::access(path.c_str(), R_OK);
+}
+
+bool fs::isWritable(const std::string &path)
+{
+    return !::access(path.c_str(), W_OK);
+}
+
+bool fs::isExecutable(const std::string &path)
+{
+    return !::access(path.c_str(), X_OK);
+}
+
+// -----------------------------------------------------------------------------
+// property
+struct ::timespec fs::atime(const std::string &path)
+{
+    struct ::stat st{};
+    if (::stat(path.c_str(), &st))
+        return {};
+
+#ifdef __linux__
+    return st.st_atim;
+#else
+    return st.st_atimespec;
+#endif
+}
+
+struct ::timespec fs::mtime(const std::string &path)
+{
+    struct ::stat st{};
+    if (::stat(path.c_str(), &st))
+        return {};
+
+#ifdef __linux__
+    return st.st_mtim;
+#else
+    return st.st_mtimespec;
+#endif
+}
+
+struct ::timespec fs::ctime(const std::string &path)
+{
+    struct ::stat st{};
+    if (::stat(path.c_str(), &st))
+        return {};
+
+#ifdef __linux__
+    return st.st_ctim;
+#else
+    return st.st_ctimespec;
+#endif
+}
 
 std::size_t fs::filesize(const std::string &file)
 {

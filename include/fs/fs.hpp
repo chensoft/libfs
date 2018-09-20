@@ -244,8 +244,8 @@ namespace fs
     // Get file or directory's modification time
     struct ::timespec mtime(const std::string &path);
 
-    // Get file or directory's create time
-    // todo ctime is not create time?
+    // Get file or directory's last status change time
+    // @note it is changed by writing inode info (e.g: owner, group, link count, mode, ...)
     struct ::timespec ctime(const std::string &path);
 
     // Get file size
