@@ -243,11 +243,11 @@ fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
 {
     auto parent = fs::dirname(dir);
 
-    if (!parent.empty() && !fs::isDir(parent, false))  // todo check other call fs::isXXX more strict, consider symbolic link
+    if (!parent.empty() && !fs::isDir(parent))
     {
         auto result = fs::mkdir(parent, mode);
         if (!result)
-            return result;  // todo check others do not return unnecessary status(errno)
+            return result;
     }
 
     return dir.empty() || !::mkdir(dir.c_str(), mode) || (errno == EEXIST) ? status() : status(errno);

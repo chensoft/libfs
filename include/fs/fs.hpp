@@ -268,7 +268,6 @@ namespace fs
     // Create a directory
     // @param mode default mode is rwxr-xr-x
     // @note empty dir will be considered successful
-    // todo check all relative paths
     status mkdir(const std::string &dir, std::uint16_t mode = 0755);
 
     // Rename a file or directory
@@ -277,8 +276,6 @@ namespace fs
     // Remove a file or directory
     // @note non-existent path will be considered successful
     status remove(const std::string &path);
-
-    // todo add trash method
 
     // Copy a file or directory
     // todo if target exist and is dir then copy source file to target folder

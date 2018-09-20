@@ -191,26 +191,26 @@ bool fs::isRelative(const std::string &path)
     return !fs::drive(path);
 }
 
-//// -----------------------------------------------------------------------------
-//// operation
-//fs::status fs::rename(const std::string &path_old, const std::string &path_new)
-//{
-//    // remove existence path
-//    auto result = fs::remove(path_new);
-//    if (!result)
-//        return result;
-//
-//    // create new directory
-//    result = fs::mkdir(fs::dirname(path_new));
-//    if (!result)
-//        return result;
-//
-//    return !::rename(path_old.c_str(), path_new.c_str()) ? status() : status(errno);
-//}
-//
+// -----------------------------------------------------------------------------
+// operation
+fs::status fs::rename(const std::string &path_old, const std::string &path_new)
+{
+    // remove existence path
+    auto result = fs::remove(path_new);
+    if (!result)
+        return result;
+
+    // create new directory
+    result = fs::mkdir(fs::dirname(path_new));
+    if (!result)
+        return result;
+
+    return !::rename(path_old.c_str(), path_new.c_str()) ? status() : status(errno);
+}
+
 //fs::status fs::copy(const std::string &path_old, const std::string &path_new)
 //{
-//    if (fs::isDir(path_old, false))
+//    if (fs::isDir(path_old))
 //    {
 //        auto result = fs::mkdir(path_new);
 //        if (!result)
