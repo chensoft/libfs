@@ -318,7 +318,6 @@ namespace fs
     // IO
     // -------------------------------------------------------------------------
 
-    // todo fstream is too slow, use others
     // Read all file contents to a string
     std::string read(const std::string &file);
 
@@ -336,5 +335,6 @@ namespace fs
     status append(const std::string &file, const std::string &data);
     status append(const std::string &file, const void *data, std::size_t size);
 
-    // todo add resize, resize file to specific size
+    // Resize file to specific size
+    status resize(const std::string &file, std::size_t size);
 }

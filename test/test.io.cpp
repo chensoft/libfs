@@ -9,15 +9,15 @@
 
 TEST_CASE("fs.io")
 {
-    //        auto tmp = fs::tmp() + fs::sep() + fs::uuid();
-    //
-    //        CHECK(fs::write(tmp + "/file.txt", "abcde"));
-    //        CHECK(fs::read(tmp + "/file.txt") == "abcde");
-    //
-    //        CHECK(fs::append(tmp + "/file.txt", "\n12345"));
-    //        CHECK(fs::read(tmp + "/file.txt") == "abcde\n12345");
-    //
-    //        std::vector<std::string> line_by_line = {"abcde", "12345"};
-    //
-    //        CHECK(fs::read(tmp + "/file.txt", '\n') == line_by_line);
+    auto root = fs::tmp() + fs::sep() + fs::uuid() + fs::sep();
+
+    CHECK(fs::write(root + "file.txt", "abcde"));
+
+    CHECK(fs::read(root + "file.txt") == "abcde");
+    CHECK(fs::read(root + "file.txt", 3, 2) == "de");
+
+    CHECK(fs::append(root + "file.txt", "-12345"));
+
+    CHECK(fs::read(root + "file.txt") == "abcde-12345");
+    CHECK(fs::read(root + "file.txt", '-') == std::vector<std::string>{"abcde", "12345"});
 }

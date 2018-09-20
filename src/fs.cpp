@@ -276,39 +276,43 @@ std::string fs::read(const std::string &file)
     return fs::read(file, 0, fs::filesize(file));
 }
 
-#include <fstream>  // todo remove
 std::string fs::read(const std::string &file, std::size_t start, std::size_t length)
 {
-    if (length <= 0)
+    auto deleter = [] (FILE *ptr) { ::fclose(ptr); };
+    std::unique_ptr<FILE, decltype(deleter)> in(::fopen(file.c_str(), "rb"), deleter);
+
+    if (!in || (start && ::fseek(in.get(), start, SEEK_SET)))
         return "";
 
-    // todo use unique_ptr + FILE
-    std::ifstream in(file, std::ios_base::binary);
-
-    if (start)
-        in.seekg(start);
-
-    if (in && !in.eof())
-    {
-        std::string ret(length, '\0');
-        in.read(&ret[0], static_cast<std::streamsize>(length));
-        ret.resize(static_cast<std::size_t>(in.gcount()));
-
-        return ret;
-    }
-
-    return "";
+    std::string ret(length, '\0');
+    ret.resize(::fread(&ret[0], 1, length, in.get()));
+    return ret;
 }
 
 std::vector<std::string> fs::read(const std::string &file, char sep)
 {
-    // todo use fopen
-    std::vector<std::string> ret;
-    std::ifstream in(file, std::ios_base::binary);
-    std::string line;
+    auto deleter = [] (FILE *ptr) { ::fclose(ptr); };
+    std::unique_ptr<FILE, decltype(deleter)> in(::fopen(file.c_str(), "rb"), deleter);
+    if (!in)
+        return {};
 
-    while (std::getline(in, line, sep))
-        ret.emplace_back(std::move(line));
+    std::vector<std::string> ret;
+    std::size_t size = 0;
+    char *line = nullptr;
+
+    while (::getdelim(&line, &size, sep, in.get()) > 0)
+    {
+        std::string tmp(line);
+        if (tmp.back() == sep)
+            tmp.erase(tmp.end() - 1);
+
+        ::free(line);
+
+        size = 0;
+        line = nullptr;
+
+        ret.emplace_back(std::move(tmp));
+    }
 
     return ret;
 }
@@ -324,11 +328,12 @@ fs::status fs::write(const std::string &file, const void *data, std::size_t size
     if (!fs::mkdir(fs::dirname(file)))
         return status(errno);
 
-    std::ofstream out(file, std::ios_base::binary);
-    if (out)
-        out.write(static_cast<const char*>(data), size);
+    auto deleter = [] (FILE *ptr) { ::fclose(ptr); };
+    std::unique_ptr<FILE, decltype(deleter)> out(::fopen(file.c_str(), "wb"), deleter);
+    if (!out)
+        return status(errno);
 
-    return out.good() ? status() : status(errno);
+    return ::fwrite(data, 1, size, out.get()) == size ? status() : status(errno);
 }
 
 fs::status fs::append(const std::string &file, const std::string &data)
@@ -341,9 +346,10 @@ fs::status fs::append(const std::string &file, const void *data, std::size_t siz
     if (!fs::mkdir(fs::dirname(file)))
         return status(errno);
 
-    std::ofstream out(file, std::ios_base::binary | std::ios_base::app);
-    if (out)
-        out.write(static_cast<const char*>(data), size);
+    auto deleter = [] (FILE *ptr) { ::fclose(ptr); };
+    std::unique_ptr<FILE, decltype(deleter)> out(::fopen(file.c_str(), "ab+"), deleter);
+    if (!out)
+        return status(errno);
 
-    return out.good() ? status() : status(errno);
+    return ::fwrite(data, 1, size, out.get()) == size ? status() : status(errno);
 }
