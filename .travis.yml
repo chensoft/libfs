@@ -30,7 +30,7 @@ matrix:
       script:
         - mkdir build
         - cd build
-        - cmake -DCMAKE_SYSTEM_NAME=Android -DCMAKE_SYSTEM_VERSION=14 -DCMAKE_ANDROID_NDK=$NDK_ROOT -DCMAKE_ANDROID_ARCH_ABI=armeabi-v7a -DCMAKE_ANDROID_STL_TYPE=c++_shared ..
+        - cmake -DCMAKE_SYSTEM_NAME=Android -DCMAKE_SYSTEM_VERSION=19 -DCMAKE_ANDROID_NDK=$NDK_ROOT -DCMAKE_ANDROID_ARCH_ABI=armeabi-v7a -DCMAKE_ANDROID_STL_TYPE=c++_shared ..
         - make -j
 
     - os: osx
