@@ -208,8 +208,10 @@ fs::status fs::rename(const std::string &path_old, const std::string &path_new)
     return !::rename(path_old.c_str(), path_new.c_str()) ? status() : status(errno);
 }
 
-//fs::status fs::copy(const std::string &path_old, const std::string &path_new)
-//{
+fs::status fs::copy(const std::string &source, const std::string &target)
+{
+    return status();
+
 //    if (fs::isDir(path_old))
 //    {
 //        auto result = fs::mkdir(path_new);
@@ -239,8 +241,6 @@ fs::status fs::rename(const std::string &path_old, const std::string &path_new)
 //
 //        auto deleter = [] (FILE *ptr) { ::fclose(ptr); };
 //
-//        // todo use setbuf(f, NULL) disable buffering
-//        // todo use mmap, std async
 //        std::unique_ptr<FILE, decltype(deleter)> in(::fopen(path_old.c_str(), "rb"), deleter);
 //        std::unique_ptr<FILE, decltype(deleter)> out(::fopen(path_new.c_str(), "wb"), deleter);
 //
@@ -258,7 +258,7 @@ fs::status fs::rename(const std::string &path_old, const std::string &path_new)
 //
 //        return status(::ferror(in.get()));
 //    }
-//}
+}
 
 // -----------------------------------------------------------------------------
 // traversal

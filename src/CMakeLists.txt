@@ -33,7 +33,7 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/fs DESTINATION include)
 
 # code warnings
 if(UNIX)
-    target_compile_options(fs PRIVATE -Wall -Wextra -Wmissing-field-initializers)
+    target_compile_options(fs PRIVATE -Wall -Wextra -Wno-missing-field-initializers)
 endif()
 
 # code coverage

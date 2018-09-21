@@ -277,12 +277,11 @@ namespace fs
     // @note non-existent path will be considered successful
     status remove(const std::string &path);
 
-    // Copy a file or directory
-    // todo if target exist and is dir then copy source file to target folder
-    // todo if target not exist, treat it as directory or target file path?
-    // todo if source is directory, should copy itself to target
-    // todo parameter need re-design
-    status copy(const std::string &path_old, const std::string &path_new);
+    // Copy a file or directory, do not follow symbolic links
+    // *) if source is a directory then copy it recursively
+    // *) if target is a existing directory then copy source into the directory
+    // *) if target is a existing file or non-existing path then final path is target
+    status copy(const std::string &source, const std::string &target);
 
     // Symbol link file or directory
     // @param path the original object
