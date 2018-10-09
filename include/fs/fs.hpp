@@ -21,7 +21,8 @@ namespace fs
     class status
     {
     public:
-        explicit status(int code = 0) : error(code, std::generic_category()) {}
+        status() = default;
+        explicit status(int code) : error(code, std::generic_category()) {}  // todo int should convert to std errc
         explicit operator bool() const { return !error; }
 
         std::error_code error;
@@ -277,11 +278,11 @@ namespace fs
     // @note non-existent path will be considered successful
     status remove(const std::string &path);
 
-    // Copy a file or directory, do not follow symbolic links
-    // *) if source is a directory then copy it recursively
+    // Copy a file or directory, do not follow symbolic links on the source path
     // *) if target is a existing directory then copy source into the directory
-    // *) if target is a existing file or non-existing path then final path is target
-    status copy(const std::string &source, const std::string &target);
+    // *) if target is not a directory then treat target as the final path
+    // *) if source is a directory then copy it recursively
+    status copy(const std::string &source, std::string target);
 
     // Symbol link file or directory
     // @param path the original object

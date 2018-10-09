@@ -208,56 +208,40 @@ fs::status fs::rename(const std::string &path_old, const std::string &path_new)
     return !::rename(path_old.c_str(), path_new.c_str()) ? status() : status(errno);
 }
 
-fs::status fs::copy(const std::string &source, const std::string &target)
+fs::status fs::copy(const std::string &source, std::string target)
 {
-    return status();
+    // append source's basename if target is a directory
+    if (fs::isDir(target))
+        target += fs::sep() + fs::basename(source);
 
-//    if (fs::isDir(path_old))
-//    {
-//        auto result = fs::mkdir(path_new);
-//        if (!result)
-//            return result;
-//
-//        auto size = path_old.size();
-//
-//        fs::visit(path_old, [&] (const std::string &path, bool *stop) {
-//            auto sub = path.substr(size, path.size() - size);
-//
-//            if (fs::isFile(path))
-//                result = fs::copy(path, path_new + sub);
-//            else
-//                result = fs::mkdir(path_new + sub);
-//
-//            *stop = !result;
-//        });
-//
-//        return result;
-//    }
-//    else
-//    {
-//        auto result = fs::mkdir(fs::dirname(path_new));
-//        if (!result)
-//            return result;
-//
-//        auto deleter = [] (FILE *ptr) { ::fclose(ptr); };
-//
-//        std::unique_ptr<FILE, decltype(deleter)> in(::fopen(path_old.c_str(), "rb"), deleter);
-//        std::unique_ptr<FILE, decltype(deleter)> out(::fopen(path_new.c_str(), "wb"), deleter);
-//
-//        if (!in or !out)
-//            return status(errno);
-//
-//        char buf[4096];
-//        size_t len = 0;
-//
-//        while ((len = ::fread(buf, 1, sizeof(buf), in.get())) > 0)
-//        {
-//            if (::fwrite(buf, 1, len, out.get()) != len)
-//                return status(::ferror(out.get()));
-//        }
-//
-//        return status(::ferror(in.get()));
-//    }
+    // if source is a directory
+    if (fs::isDir(source, false))
+    {
+        auto result = fs::mkdir(target);
+        if (!result)
+            return result;
+
+        fs::visit(source, [&] (const std::string &path, bool *stop) {
+            result = fs::copy(path, target);
+            *stop  = !result;
+        }, false);
+
+        return result;
+    }
+
+    auto result = fs::mkdir(fs::dirname(target));
+    if (!result)
+        return result;
+
+    // if source is a file
+    if (fs::isFile(source, false))
+        return fs::write(target, fs::read(source));
+
+    // if source is symlink
+    if (fs::isSymlink(source))
+        return fs::symlink(source, target);
+
+    return status(int(std::errc::invalid_argument)); // todo use errc
 }
 
 // -----------------------------------------------------------------------------

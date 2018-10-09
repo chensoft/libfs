@@ -37,8 +37,7 @@ TEST_CASE("fs.operation")
     CHECK(fs::remove(fs::uuid()));  // non-existent path
     CHECK(fs::remove("x"));
     CHECK_FALSE(fs::isDir("x"));
-
-    // todo copy
+    CHECK(fs::mkdir("x/b/c"));  // for later use
 
     // symlink
     CHECK(fs::mkdir("dir"));
@@ -47,9 +46,11 @@ TEST_CASE("fs.operation")
     CHECK(fs::isDir("link"));
     CHECK_FALSE(fs::isDir("link", false));
 
-    //        // todo test big file copy in release mode
-    //        CHECK(fs::write(tmp + "/source/a/b/c/file.txt", "abcde"));
-    //        CHECK(fs::filesize(tmp + "/source/a/b/c/file.txt") == 5);
-    //        CHECK(fs::copy(tmp + "/source", tmp + "/target"));  // todo need modify
-    //        CHECK(fs::filesize(tmp + "/target/a/b/c/file.txt") == 5);
+    // copy
+    CHECK(fs::copy("x", "y"));
+    CHECK(fs::copy("file.txt", "copy.txt"));
+    CHECK(fs::copy("link", "link-copy"));
+    CHECK(fs::isDir("y", false));
+    CHECK(fs::isFile("copy.txt", false));
+    CHECK(fs::isSymlink("link-copy"));
 }
