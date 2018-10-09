@@ -19,7 +19,6 @@
 #include <pwd.h>
 
 // todo PATH_MAX is not enough, check path greater than PATH_MAX
-// todo handle UNC pathnames
 
 // -----------------------------------------------------------------------------
 // path

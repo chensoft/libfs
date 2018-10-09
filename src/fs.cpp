@@ -77,7 +77,6 @@ std::size_t fs::drive(const std::string &path)
 // split
 std::string fs::normalize(std::string path)
 {
-    // todo test speed with old version
     std::string ret;
     std::string drv;
 
@@ -205,7 +204,7 @@ fs::status fs::rename(const std::string &path_old, const std::string &path_new)
     if (!result)
         return result;
 
-    return !::rename(path_old.c_str(), path_new.c_str()) ? status() : status(errno);
+    return !::rename(path_old.c_str(), path_new.c_str()) ? status() : status(errno);  // todo check errno in Windows, and can use in error_code?
 }
 
 fs::status fs::copy(const std::string &source, std::string target)
@@ -241,7 +240,7 @@ fs::status fs::copy(const std::string &source, std::string target)
     if (fs::isSymlink(source))
         return fs::symlink(source, target);
 
-    return status(int(std::errc::invalid_argument)); // todo use errc
+    return status(std::errc::invalid_argument);
 }
 
 // -----------------------------------------------------------------------------

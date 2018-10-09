@@ -22,7 +22,8 @@ namespace fs
     {
     public:
         status() = default;
-        explicit status(int code) : error(code, std::generic_category()) {}  // todo int should convert to std errc
+        explicit status(int code) : error(code, std::generic_category()) {}
+        explicit status(std::errc code) : error(std::make_error_code(code)) {}
         explicit operator bool() const { return !error; }
 
         std::error_code error;
