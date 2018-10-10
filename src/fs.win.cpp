@@ -7,6 +7,7 @@
 #ifdef _WIN32
 
 #include "fs/fs.hpp"
+#include <queue>
 #include <sys/utime.h>
 #include <Windows.h>
 #include <UserEnv.h>
@@ -21,6 +22,23 @@
 // todo check handle == invalid_handle
 // todo check unicode version functions
 // todo remove unused headers
+// todo handle safety
+
+// -----------------------------------------------------------------------------
+// helper
+namespace fs
+{
+    template <typename Deleter>
+    class guard final
+    {
+    public:
+        explicit guard(HANDLE val) : _val(val) {}
+        ~guard() { Deleter(_val); }
+
+    private:
+        HANDLE _val;
+    };
+}
 
 // -----------------------------------------------------------------------------
 // path
@@ -338,6 +356,127 @@ fs::status fs::symlink(const std::string &path, const std::string &link)
         return result;
 
     return !::CreateSymbolicLinkW(fs::widen(link).c_str(), fs::widen(path).c_str(), 0) ? status() : status(::GetLastError());
+}
+
+// -----------------------------------------------------------------------------
+// traversal
+static void visit_children_first(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
+{
+    WIN32_FIND_DATAW item{};
+    HANDLE ptr = ::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item);
+
+    if (ptr == INVALID_HANDLE_VALUE)
+        return;
+
+    fs::guard<decltype(::FindClose)> guard(ptr);
+    bool stop = false;
+
+    // todo do not recursive?
+    do
+    {
+        std::string name(fs::narrow(item.cFileName));
+        if (name == "." || name == "..")
+            continue;
+
+        std::string path(dir + fs::sep());
+        path += name;
+
+        callback(path, &stop);
+        if (stop)
+            return;
+
+        if (recursive && item.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            fs::visit(path, callback, recursive);
+    } while (::FindNextFileW(ptr, &item));
+}
+
+static bool visit_siblings_first(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
+{
+    WIN32_FIND_DATAW item{};
+    HANDLE ptr = ::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item);
+
+    if (ptr == INVALID_HANDLE_VALUE)
+        return false;
+
+    fs::guard<decltype(::FindClose)> guard(ptr);
+    bool stop = false;
+
+    std::queue<std::string> queue;
+
+    do
+    {
+        std::string name(fs::narrow(item.cFileName));
+        if (name == "." || name == "..")
+            continue;
+
+        std::string path(dir + fs::sep());
+        path += name;
+
+        callback(path, &stop);
+        if (stop)
+            return true;
+
+        if (recursive && item.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            queue.emplace(std::move(path));
+    } while (::FindNextFileW(ptr, &item));
+
+    while (!queue.empty())
+    {
+        auto folder = std::move(queue.front());
+        queue.pop();
+
+        if (visit_siblings_first(folder, callback, recursive))
+            return true;
+    }
+
+    return false;
+}
+
+static void visit_deepest_first(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
+{
+    WIN32_FIND_DATAW item{};
+    HANDLE ptr = ::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item);
+
+    if (ptr == INVALID_HANDLE_VALUE)
+        return;
+
+    fs::guard<decltype(::FindClose)> guard(ptr);
+    bool stop = false;
+
+    do
+    {
+        std::string name(fs::narrow(item.cFileName));
+        if (name == "." || name == "..")
+            continue;
+
+        std::string path(dir + fs::sep());
+        path += name;
+
+        if (recursive && item.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            fs::visit(path, callback, recursive);
+
+        callback(path, &stop);
+        if (stop)
+            return;
+    } while (::FindNextFileW(ptr, &item));
+}
+
+void fs::visit(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive, VisitStrategy strategy)
+{
+    switch (strategy)
+    {
+    case VisitStrategy::ChildrenFirst:
+        visit_children_first(dir, callback, recursive);
+        break;
+
+    case VisitStrategy::SiblingsFirst:
+        visit_siblings_first(dir, callback, recursive);
+        break;
+
+    case VisitStrategy::DeepestFirst:
+        visit_deepest_first(dir, callback, recursive);
+        break;
+    }
 }
 
 #endif
