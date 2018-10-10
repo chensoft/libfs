@@ -12,6 +12,11 @@
 #include <locale>
 #include <cctype>
 
+#ifdef _WIN32
+    #pragma warning(push)
+    #pragma warning(disable:4996)  // fopen
+#endif
+
 // -----------------------------------------------------------------------------
 // utils
 std::wstring fs::widen(const std::string &utf8)
@@ -308,3 +313,7 @@ fs::status fs::append(const std::string &file, const void *data, std::size_t siz
 
     return ::fwrite(data, 1, size, out.get()) == size ? status() : status(errno);
 }
+
+#ifdef _WIN32
+    #pragma warning(pop)
+#endif

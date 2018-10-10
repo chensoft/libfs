@@ -8,37 +8,17 @@
 
 #include "fs/fs.hpp"
 #include <queue>
-#include <sys/utime.h>
+#include <sys/utime.h>  // todo
 #include <Windows.h>
 #include <UserEnv.h>
 #include <Lmcons.h>
-#include <io.h>
 
 #pragma comment(lib, "userenv.lib")
 
-// todo check all && (
+#pragma warning(push)
+#pragma warning(disable:4996)  // fopen
+
 // todo check errno
-// todo check string array init
-// todo check handle == invalid_handle
-// todo check unicode version functions
-// todo remove unused headers
-// todo handle safety
-
-// -----------------------------------------------------------------------------
-// helper
-namespace fs
-{
-    template <typename Deleter>
-    class guard final
-    {
-    public:
-        explicit guard(HANDLE val) : _val(val) {}
-        ~guard() { Deleter(_val); }
-
-    private:
-        HANDLE _val;
-    };
-}
 
 // -----------------------------------------------------------------------------
 // path
@@ -57,17 +37,13 @@ std::string fs::user()
 
 std::string fs::home()
 {
-    HANDLE token = 0;
-    if (!::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &token))
+    fs::guard<HANDLE, decltype(::CloseHandle)> token;
+    if (!::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &token.val))
         return "";
 
     wchar_t buf[MAX_PATH]{};
     DWORD   len = _countof(buf);
-    BOOL    ret = ::GetUserProfileDirectoryW(token, buf, &len);
-
-    ::CloseHandle(token);
-
-    return ret ? fs::prune(fs::narrow(buf)) : "";
+    return ::GetUserProfileDirectoryW(token.val, buf, &len) ? fs::prune(fs::narrow(buf)) : "";
 }
 
 std::string fs::home(const std::string &user)
@@ -161,7 +137,7 @@ bool fs::isDir(const std::string &path, bool follow_symlink)
         return false;  // todo
 
     DWORD attr = ::GetFileAttributesW(fs::widen(path).c_str());
-    return (attr != INVALID_FILE_ATTRIBUTES) && (attr & FILE_ATTRIBUTE_DIRECTORY);
+    return attr != INVALID_FILE_ATTRIBUTES && attr & FILE_ATTRIBUTE_DIRECTORY;
 }
 
 bool fs::isFile(const std::string &path, bool follow_symlink)
@@ -170,7 +146,7 @@ bool fs::isFile(const std::string &path, bool follow_symlink)
         return false;  // todo
 
     DWORD attr = ::GetFileAttributesW(fs::widen(path).c_str());
-    return (attr != INVALID_FILE_ATTRIBUTES) && (attr & FILE_ATTRIBUTE_NORMAL);
+    return attr != INVALID_FILE_ATTRIBUTES && attr & FILE_ATTRIBUTE_NORMAL;
 }
 
 bool fs::isSymlink(const std::string &path)
@@ -324,7 +300,7 @@ fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
             return result;
     }
 
-    return dir.empty() || !::CreateDirectoryW(fs::widen(dir).c_str(), NULL) == ERROR_ALREADY_EXISTS ? status() : status(::GetLastError());
+    return dir.empty() || !::CreateDirectoryW(fs::widen(dir).c_str(), NULL) || ::GetLastError() == ERROR_ALREADY_EXISTS ? status() : status(::GetLastError());
 }
 
 fs::status fs::remove(const std::string &path)
@@ -363,12 +339,11 @@ fs::status fs::symlink(const std::string &path, const std::string &link)
 static void visit_children_first(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
 {
     WIN32_FIND_DATAW item{};
-    HANDLE ptr = ::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item);
+    fs::guard<HANDLE, decltype(::FindClose)> ptr = ::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item);
 
-    if (ptr == INVALID_HANDLE_VALUE)
+    if (ptr.val == INVALID_HANDLE_VALUE)
         return;
 
-    fs::guard<decltype(::FindClose)> guard(ptr);
     bool stop = false;
 
     // todo do not recursive?
@@ -387,18 +362,17 @@ static void visit_children_first(const std::string &dir, const std::function<voi
 
         if (recursive && item.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             fs::visit(path, callback, recursive);
-    } while (::FindNextFileW(ptr, &item));
+    } while (::FindNextFileW(ptr.val, &item));
 }
 
 static bool visit_siblings_first(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
 {
     WIN32_FIND_DATAW item{};
-    HANDLE ptr = ::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item);
+    fs::guard<HANDLE, decltype(::FindClose)> ptr = ::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item);
 
-    if (ptr == INVALID_HANDLE_VALUE)
+    if (ptr.val == INVALID_HANDLE_VALUE)
         return false;
 
-    fs::guard<decltype(::FindClose)> guard(ptr);
     bool stop = false;
 
     std::queue<std::string> queue;
@@ -418,7 +392,7 @@ static bool visit_siblings_first(const std::string &dir, const std::function<voi
 
         if (recursive && item.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             queue.emplace(std::move(path));
-    } while (::FindNextFileW(ptr, &item));
+    } while (::FindNextFileW(ptr.val, &item));
 
     while (!queue.empty())
     {
@@ -435,12 +409,12 @@ static bool visit_siblings_first(const std::string &dir, const std::function<voi
 static void visit_deepest_first(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
 {
     WIN32_FIND_DATAW item{};
-    HANDLE ptr = ::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item);
+    fs::guard<HANDLE, decltype(::FindClose)> ptr = ::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item);
 
-    if (ptr == INVALID_HANDLE_VALUE)
+    if (ptr.val == INVALID_HANDLE_VALUE)
         return;
 
-    fs::guard<decltype(::FindClose)> guard(ptr);
+    fs::guard<HANDLE, decltype(::FindClose)> _(ptr);
     bool stop = false;
 
     do
@@ -458,7 +432,7 @@ static void visit_deepest_first(const std::string &dir, const std::function<void
         callback(path, &stop);
         if (stop)
             return;
-    } while (::FindNextFileW(ptr, &item));
+    } while (::FindNextFileW(ptr.val, &item));
 }
 
 void fs::visit(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive, VisitStrategy strategy)
@@ -478,5 +452,7 @@ void fs::visit(const std::string &dir, const std::function<void(const std::strin
         break;
     }
 }
+
+#pragma warning(pop)
 
 #endif

@@ -336,6 +336,20 @@ namespace fs
     status append(const std::string &file, const std::string &data);
     status append(const std::string &file, const void *data, std::size_t size);
 
-    // Resize file to specific size
+    // todo Resize file to specific size
     status resize(const std::string &file, std::size_t size);
+
+    // -------------------------------------------------------------------------
+    // helper
+    // -------------------------------------------------------------------------
+
+    template <typename Value, typename Deleter>
+    class guard final
+    {
+    public:
+        guard(Value v = Value()) : val(v) {}
+        ~guard() { Deleter(_val); }
+
+        Value val;
+    };
 }
