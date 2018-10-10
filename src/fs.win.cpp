@@ -7,6 +7,7 @@
 #ifdef _WIN32
 
 #include "fs/fs.hpp"
+#include <sys/utime.h>
 #include <Windows.h>
 #include <UserEnv.h>
 #include <Lmcons.h>
@@ -19,6 +20,7 @@
 // todo check string array init
 // todo check handle == invalid_handle
 // todo check unicode version functions
+// todo remove unused headers
 
 // -----------------------------------------------------------------------------
 // path
@@ -176,7 +178,7 @@ bool fs::isWritable(const std::string &path)
 bool fs::isExecutable(const std::string &path)
 {
     DWORD type = 0;
-    return ::GetBinaryTypeW(fs::widen(path).c_str(), &type) == TRUE;
+    return ::GetBinaryTypeW(fs::widen(path).c_str(), &type);
 }
 
 // -----------------------------------------------------------------------------
@@ -254,6 +256,88 @@ std::size_t fs::filesize(const std::string &file)
 {
     auto handle = ::CreateFileW(fs::widen(file).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     return handle != INVALID_HANDLE_VALUE ? ::GetFileSize(handle, NULL) : 0;
+}
+
+// -----------------------------------------------------------------------------
+// operation
+fs::status fs::chdir(const std::string &dir_new, std::string *dir_old)
+{
+    if (dir_old)
+        *dir_old = fs::cwd();
+
+    return ::SetCurrentDirectoryW(fs::widen(dir_new).c_str()) ? status() : status(::GetLastError());
+}
+
+fs::status fs::touch(const std::string &file, std::time_t atime, std::time_t mtime)
+{
+    // using current time if it's zero
+    if (!atime)
+        atime = ::time(nullptr);
+
+    if (!mtime)
+        mtime = ::time(nullptr);
+
+    // create parent directory
+    auto result = fs::mkdir(fs::dirname(file));
+    if (!result)
+        return result;
+
+    // todo use CreateFile and SetFileTime
+    // create file if not exist
+    auto deleter = [](FILE *ptr) { ::fclose(ptr); };
+    std::unique_ptr<FILE, decltype(deleter)> handle(::fopen(file.c_str(), "ab+"), deleter);
+
+    if (!handle)
+        return status(errno);
+
+    // modify mtime and atime
+    ::_utimbuf time{atime, mtime};
+    return !::_wutime(fs::widen(file).c_str(), &time) ? status() : status(errno);
+}
+
+fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
+{
+    auto parent = fs::dirname(dir);
+
+    if (!parent.empty() && !fs::isDir(parent))
+    {
+        auto result = fs::mkdir(parent, mode);
+        if (!result)
+            return result;
+    }
+
+    return dir.empty() || !::CreateDirectoryW(fs::widen(dir).c_str(), NULL) == ERROR_ALREADY_EXISTS ? status() : status(::GetLastError());
+}
+
+fs::status fs::remove(const std::string &path)
+{
+    // todo move to fs.cpp
+    if (!::remove(path.c_str()) || errno == ENOENT)
+        return {};
+
+    if (errno != ENOTEMPTY)
+        return status(errno);
+
+    auto error = 0;
+
+    fs::visit(path, [&](const std::string &item, bool *stop) {
+        if (::remove(item.c_str()))
+        {
+            *stop = true;
+            error = errno;
+        }
+    }, true, VisitStrategy::DeepestFirst);
+
+    return !error && ::remove(path.c_str()) ? status(errno) : status(error);
+}
+
+fs::status fs::symlink(const std::string &path, const std::string &link)
+{
+    auto result = fs::mkdir(fs::dirname(link));
+    if (!result)
+        return result;
+
+    return !::CreateSymbolicLinkW(fs::widen(link).c_str(), fs::widen(path).c_str(), 0) ? status() : status(::GetLastError());
 }
 
 #endif
