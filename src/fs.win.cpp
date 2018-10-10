@@ -9,6 +9,7 @@
 #include "fs/fs.hpp"
 #include <Windows.h>
 #include <UserEnv.h>
+#include <Lmcons.h>
 
 #pragma comment(lib, "userenv.lib")
 
@@ -18,6 +19,13 @@ std::string fs::root()
 {
     wchar_t buf[MAX_PATH]{};
     return ::GetSystemWindowsDirectoryW(buf, _countof(buf)) >= 3 ? fs::narrow(buf).substr(0, 3) : "";
+}
+
+std::string fs::user()
+{
+    wchar_t buf[UNLEN + 1]{};
+    DWORD   len = _countof(buf);
+    return ::GetUserNameW(buf, &len) ? fs::narrow(buf) : "";
 }
 
 std::string fs::home()
@@ -33,6 +41,13 @@ std::string fs::home()
     ::CloseHandle(token);
 
     return ret ? fs::prune(fs::narrow(buf)) : "";
+}
+
+std::string fs::home(const std::string &user)
+{
+    auto cur = fs::dirname(fs::home());
+    auto ret = cur + fs::sep() + user;
+    return fs::isDir(ret) ? ret : "";
 }
 
 std::string fs::tmp()
@@ -55,13 +70,14 @@ char fs::sep()
 std::vector<std::string> fs::drives()
 {
     std::vector<std::string> ret;
+    std::string suffix(":\\");
 
     DWORD bits = ::GetLogicalDrives();
 
     for (auto i = 0; i < 26; ++i)  // A to Z
     {
         if (bits & (1 << i))
-            ret.emplace_back(1, 'A' + i);
+            ret.emplace_back(std::string(1, 'A' + i) + suffix);
     }
 
     return ret;

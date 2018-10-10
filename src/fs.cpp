@@ -272,34 +272,6 @@ std::string fs::read(const std::string &file, std::size_t start, std::size_t len
     return ret;
 }
 
-std::vector<std::string> fs::read(const std::string &file, char sep)
-{
-    auto deleter = [] (FILE *ptr) { ::fclose(ptr); };
-    std::unique_ptr<FILE, decltype(deleter)> in(::fopen(file.c_str(), "rb"), deleter);
-    if (!in)
-        return {};
-
-    std::vector<std::string> ret;
-    std::size_t size = 0;
-    char *line = nullptr;
-
-    while (::getdelim(&line, &size, sep, in.get()) > 0)
-    {
-        std::string tmp(line);
-        if (tmp.back() == sep)
-            tmp.erase(tmp.end() - 1);
-
-        ::free(line);
-
-        size = 0;
-        line = nullptr;
-
-        ret.emplace_back(std::move(tmp));
-    }
-
-    return ret;
-}
-
 // write
 fs::status fs::write(const std::string &file, const std::string &data)
 {

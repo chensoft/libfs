@@ -74,7 +74,7 @@ namespace fs
     std::string seps();
 
     // Get mount points or system drives
-    // @result "/" on Unix, "C", "D" ... on Windows
+    // @result "/" on Unix, "C:\", "D:\" ... on Windows
     std::vector<std::string> drives();
 
     // Get path's mount point or drive size
@@ -324,9 +324,6 @@ namespace fs
 
     // Read part of file's contents to a string
     std::string read(const std::string &file, std::size_t start, std::size_t length);
-
-    // Read file line by line using separator
-    std::vector<std::string> read(const std::string &file, char sep);
 
     // Write data to the file
     status write(const std::string &file, const std::string &data);

@@ -17,7 +17,5 @@ TEST_CASE("fs.io")
     CHECK(fs::read(root + "file.txt", 3, 2) == "de");
 
     CHECK(fs::append(root + "file.txt", "-12345"));
-
     CHECK(fs::read(root + "file.txt") == "abcde-12345");
-    CHECK(fs::read(root + "file.txt", '-') == std::vector<std::string>{"abcde", "12345"});
 }
