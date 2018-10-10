@@ -19,6 +19,7 @@
 #include <pwd.h>
 
 // todo PATH_MAX is not enough, check path greater than PATH_MAX
+// todo char and struct init
 
 // -----------------------------------------------------------------------------
 // path

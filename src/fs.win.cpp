@@ -95,8 +95,15 @@ std::string fs::realpath(std::string path)
     if (fs::isRelative(path))
         path.replace(0, 0, fs::cwd() + fs::sep());
 
+    fs::guard<HANDLE, decltype(::CloseHandle)> handle = ::CreateFileW(fs::widen(path).c_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    if (handle.val == INVALID_HANDLE_VALUE)
+        return path;
+
     wchar_t buf[MAX_PATH]{};
-    return ::GetFullPathNameW(fs::widen(path).c_str(), _countof(buf), buf, NULL) ? fs::narrow(buf) : path;
+    if (::GetFinalPathNameByHandleW(handle.val, buf, _countof(buf), 0))
+        path = fs::narrow(buf);
+
+    return path.size() >= 4 && path.substr(0, 4) == "\\\\?\\" ? path.substr(4) : path;  // remove "\\?\" prefix
 }
 
 // -----------------------------------------------------------------------------
@@ -133,10 +140,7 @@ bool fs::isEmpty(const std::string &path)
 
 bool fs::isDir(const std::string &path, bool follow_symlink)
 {
-    if (follow_symlink)
-        return false;  // todo
-
-    DWORD attr = ::GetFileAttributesW(fs::widen(path).c_str());
+    DWORD attr = ::GetFileAttributesW(fs::widen(follow_symlink ? fs::realpath(path) : path).c_str());
     return attr != INVALID_FILE_ATTRIBUTES && attr & FILE_ATTRIBUTE_DIRECTORY;
 }
 
@@ -146,7 +150,7 @@ bool fs::isFile(const std::string &path, bool follow_symlink)
         return false;  // todo
 
     DWORD attr = ::GetFileAttributesW(fs::widen(path).c_str());
-    return attr != INVALID_FILE_ATTRIBUTES && attr & FILE_ATTRIBUTE_NORMAL;
+    return attr != INVALID_FILE_ATTRIBUTES && attr & ~FILE_ATTRIBUTE_DIRECTORY;
 }
 
 bool fs::isSymlink(const std::string &path)
