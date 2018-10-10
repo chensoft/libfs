@@ -10,8 +10,15 @@
 #include <Windows.h>
 #include <UserEnv.h>
 #include <Lmcons.h>
+#include <io.h>
 
 #pragma comment(lib, "userenv.lib")
+
+// todo check all && (
+// todo check errno
+// todo check string array init
+// todo check handle == invalid_handle
+// todo check unicode version functions
 
 // -----------------------------------------------------------------------------
 // path
@@ -81,6 +88,172 @@ std::vector<std::string> fs::drives()
     }
 
     return ret;
+}
+
+// -----------------------------------------------------------------------------
+// split
+std::string fs::realpath(std::string path)
+{
+    path = fs::normalize(std::move(path));
+
+    if (fs::isRelative(path))
+        path.replace(0, 0, fs::cwd() + fs::sep());
+
+    wchar_t buf[MAX_PATH]{};
+    return ::GetFullPathNameW(fs::widen(path).c_str(), _countof(buf), buf, NULL) ? fs::narrow(buf) : path;
+}
+
+// -----------------------------------------------------------------------------
+// check
+bool fs::isExist(const std::string &path, bool follow_symlink)
+{
+    if (follow_symlink)
+        return false;  // todo
+
+    // todo should use CreateFile with OF_EXIST?
+    return ::GetFileAttributesW(fs::widen(path).c_str()) != INVALID_FILE_ATTRIBUTES;
+}
+
+bool fs::isEmpty(const std::string &path)
+{
+    // treat not exist as empty
+    if (!fs::isExist(path))
+        return true;
+
+    // check file contents
+    if (fs::isFile(path))
+        return !fs::filesize(path);
+
+    // check dir has entries
+    bool empty = true;
+
+    fs::visit(path, [&](const std::string &, bool *stop) {
+        empty = false;
+        *stop = true;
+    }, false);
+
+    return empty;
+}
+
+bool fs::isDir(const std::string &path, bool follow_symlink)
+{
+    if (follow_symlink)
+        return false;  // todo
+
+    DWORD attr = ::GetFileAttributesW(fs::widen(path).c_str());
+    return (attr != INVALID_FILE_ATTRIBUTES) && (attr & FILE_ATTRIBUTE_DIRECTORY);
+}
+
+bool fs::isFile(const std::string &path, bool follow_symlink)
+{
+    if (follow_symlink)
+        return false;  // todo
+
+    DWORD attr = ::GetFileAttributesW(fs::widen(path).c_str());
+    return (attr != INVALID_FILE_ATTRIBUTES) && (attr & FILE_ATTRIBUTE_NORMAL);
+}
+
+bool fs::isSymlink(const std::string &path)
+{
+    // todo
+    return false;
+}
+
+// -----------------------------------------------------------------------------
+// mode
+bool fs::isReadable(const std::string &path)
+{
+    // see https://msdn.microsoft.com/en-us/library/1w06ktdy.aspx
+    // 0: Existence only, 2: Write-only, 4: Read-only, 6: Read and write
+    return !::_waccess(fs::widen(path).c_str(), 6) || !::_waccess(fs::widen(path).c_str(), 4);
+}
+
+bool fs::isWritable(const std::string &path)
+{
+    return !::_waccess(fs::widen(path).c_str(), 6) || !::_waccess(fs::widen(path).c_str(), 2);
+}
+
+bool fs::isExecutable(const std::string &path)
+{
+    DWORD type = 0;
+    return ::GetBinaryTypeW(fs::widen(path).c_str(), &type) == TRUE;
+}
+
+// -----------------------------------------------------------------------------
+// property
+fs::status fs::filetime(const std::string &path, struct ::timespec *access, struct ::timespec *modify, struct ::timespec *create)
+{
+    auto handle = ::CreateFileW(fs::widen(path).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (handle == INVALID_HANDLE_VALUE)
+        return status(::GetLastError()); // todo verify
+
+    FILETIME access_time{}, modify_time{}, create_time{};
+    if (!::GetFileTime(handle, &create_time, &access_time, &modify_time))  // create time is the first
+        return status(::GetLastError());
+
+    ULARGE_INTEGER large_time{};
+
+    auto ticks = 10000000ull;     // FILETIME ticks are in 100 nanoseconds
+    auto epoch = 11644473600ull;  // FILETIME epoch is 1601-01-01T00:00:00Z
+
+    if (access)
+    {
+        large_time.LowPart  = access_time.dwLowDateTime;
+        large_time.HighPart = access_time.dwHighDateTime;
+
+        // todo check
+        access->tv_sec  = static_cast<decltype(access->tv_sec)>(large_time.QuadPart / ticks - epoch);
+        access->tv_nsec = static_cast<decltype(access->tv_nsec)>(large_time.QuadPart - access->tv_sec * ticks + epoch);
+    }
+
+    if (modify)
+    {
+        large_time.LowPart = modify_time.dwLowDateTime;
+        large_time.HighPart = modify_time.dwHighDateTime;
+
+        // todo check
+        modify->tv_sec = static_cast<decltype(modify->tv_sec)>(large_time.QuadPart / ticks - epoch);
+        modify->tv_nsec = static_cast<decltype(modify->tv_nsec)>(large_time.QuadPart - modify->tv_sec * ticks + epoch);
+    }
+
+    if (create)
+    {
+        large_time.LowPart = create_time.dwLowDateTime;
+        large_time.HighPart = create_time.dwHighDateTime;
+
+        // todo check
+        create->tv_sec = static_cast<decltype(create->tv_sec)>(large_time.QuadPart / ticks - epoch);
+        create->tv_nsec = static_cast<decltype(create->tv_nsec)>(large_time.QuadPart - create->tv_sec * ticks + epoch);
+    }
+
+    return {};
+}
+
+struct ::timespec fs::atime(const std::string &path)
+{
+    struct ::timespec time {};
+    fs::filetime(path, &time, nullptr, nullptr);
+    return time;
+}
+
+struct ::timespec fs::mtime(const std::string &path)
+{
+    struct ::timespec time {};
+    fs::filetime(path, nullptr, &time, nullptr);
+    return time;
+}
+
+struct ::timespec fs::ctime(const std::string &path)
+{
+    struct ::timespec time {};
+    fs::filetime(path, nullptr, nullptr, &time);
+    return time;
+}
+
+std::size_t fs::filesize(const std::string &file)
+{
+    auto handle = ::CreateFileW(fs::widen(file).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    return handle != INVALID_HANDLE_VALUE ? ::GetFileSize(handle, NULL) : 0;
 }
 
 #endif

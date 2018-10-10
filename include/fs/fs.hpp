@@ -240,6 +240,9 @@ namespace fs
     // property
     // -------------------------------------------------------------------------
 
+    // Get file or directory's all time
+    status filetime(const std::string &path, struct ::timespec *access, struct ::timespec *modify, struct ::timespec *create);
+
     // Get file or directory's access time
     struct ::timespec atime(const std::string &path);
 

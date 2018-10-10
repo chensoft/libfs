@@ -157,43 +157,54 @@ bool fs::isExecutable(const std::string &path)
 
 // -----------------------------------------------------------------------------
 // property
-struct ::timespec fs::atime(const std::string &path)
+fs::status fs::filetime(const std::string &path, struct ::timespec *access, struct ::timespec *modify, struct ::timespec *create)
 {
-    struct ::stat st{};
+    struct ::stat st {};
     if (::stat(path.c_str(), &st))
-        return {};
+        return status(errno);
 
 #ifdef __linux__
-    return st.st_atim;
+    if (access)
+        *access = st.st_atim;
+
+    if (modify)
+        *modify = st.st_mtim;
+
+    if (create)
+        *create = st.st_ctim;
 #else
-    return st.st_atimespec;
+    if (access)
+        *access = st.st_atimespec;
+
+    if (modify)
+        *modify = st.st_mtimespec;
+
+    if (create)
+        *create = st.st_ctimespec;
 #endif
+
+    return {};
+}
+
+struct ::timespec fs::atime(const std::string &path)
+{
+    struct ::timespec time{};
+    fs::filetime(path, &time, nullptr, nullptr);
+    return time;
 }
 
 struct ::timespec fs::mtime(const std::string &path)
 {
-    struct ::stat st{};
-    if (::stat(path.c_str(), &st))
-        return {};
-
-#ifdef __linux__
-    return st.st_mtim;
-#else
-    return st.st_mtimespec;
-#endif
+    struct ::timespec time {};
+    fs::filetime(path, nullptr, &time, nullptr);
+    return time;
 }
 
 struct ::timespec fs::ctime(const std::string &path)
 {
-    struct ::stat st{};
-    if (::stat(path.c_str(), &st))
-        return {};
-
-#ifdef __linux__
-    return st.st_ctim;
-#else
-    return st.st_ctimespec;
-#endif
+    struct ::timespec time {};
+    fs::filetime(path, nullptr, nullptr, &time);
+    return time;
 }
 
 std::size_t fs::filesize(const std::string &file)
@@ -249,13 +260,13 @@ fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
             return result;
     }
 
-    return dir.empty() || !::mkdir(dir.c_str(), mode) || (errno == EEXIST) ? status() : status(errno);
+    return dir.empty() || !::mkdir(dir.c_str(), mode) || errno == EEXIST ? status() : status(errno);
 }
 
 fs::status fs::remove(const std::string &path)
 {
-    if (!::remove(path.c_str()) || (errno == ENOENT))
-        return status();
+    if (!::remove(path.c_str()) || errno == ENOENT)
+        return {};
 
     if (errno != ENOTEMPTY)
         return status(errno);
