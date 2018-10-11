@@ -37,7 +37,7 @@ std::string fs::user()
 
 std::string fs::home()
 {
-    fs::guard<HANDLE, decltype(::CloseHandle)> token;
+    fs::guard<HANDLE, decltype(::CloseHandle)> token(::CloseHandle);
     if (!::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &token.val))
         return "";
 
@@ -95,7 +95,7 @@ std::string fs::realpath(std::string path)
     if (fs::isRelative(path))
         path.replace(0, 0, fs::cwd() + fs::sep());
 
-    fs::guard<HANDLE, decltype(::CloseHandle)> handle = ::CreateFileW(fs::widen(path).c_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    fs::guard<HANDLE, decltype(::CloseHandle)> handle(::CreateFileW(fs::widen(path).c_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0), ::CloseHandle);
     if (handle.val == INVALID_HANDLE_VALUE)
         return path;
 
@@ -149,7 +149,7 @@ bool fs::isFile(const std::string &path, bool follow_symlink)
 bool fs::isSymlink(const std::string &path)
 {
     DWORD attr = ::GetFileAttributesW(fs::widen(path).c_str());
-    return attr != INVALID_FILE_ATTRIBUTES && !(attr & FILE_ATTRIBUTE_REPARSE_POINT);
+    return attr != INVALID_FILE_ATTRIBUTES && attr & FILE_ATTRIBUTE_REPARSE_POINT;
 }
 
 // -----------------------------------------------------------------------------
@@ -176,12 +176,12 @@ bool fs::isExecutable(const std::string &path)
 // property
 fs::status fs::filetime(const std::string &path, struct ::timespec *access, struct ::timespec *modify, struct ::timespec *create)
 {
-    auto handle = ::CreateFileW(fs::widen(path).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (handle == INVALID_HANDLE_VALUE)
+    fs::guard<HANDLE, decltype(::CloseHandle)> handle(::CreateFileW(fs::widen(path).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL), ::CloseHandle);
+    if (handle.val == INVALID_HANDLE_VALUE)
         return status(::GetLastError()); // todo verify
 
     FILETIME access_time{}, modify_time{}, create_time{};
-    if (!::GetFileTime(handle, &create_time, &access_time, &modify_time))  // create time is the first
+    if (!::GetFileTime(handle.val, &create_time, &access_time, &modify_time))  // create time is the first
         return status(::GetLastError());
 
     ULARGE_INTEGER large_time{};
@@ -245,8 +245,8 @@ struct ::timespec fs::ctime(const std::string &path)
 
 std::size_t fs::filesize(const std::string &file)
 {
-    auto handle = ::CreateFileW(fs::widen(file).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    return handle != INVALID_HANDLE_VALUE ? ::GetFileSize(handle, NULL) : 0;
+    fs::guard<HANDLE, decltype(::CloseHandle)> handle(::CreateFileW(fs::widen(file).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL), ::CloseHandle);
+    return handle.val != INVALID_HANDLE_VALUE ? ::GetFileSize(handle.val, NULL) : 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -327,7 +327,7 @@ fs::status fs::remove(const std::string &path)
 static void visit_children_first(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
 {
     WIN32_FIND_DATAW item{};
-    fs::guard<HANDLE, decltype(::FindClose)> ptr = ::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item);
+    fs::guard<HANDLE, decltype(::FindClose)> ptr(::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item), ::FindClose);
 
     if (ptr.val == INVALID_HANDLE_VALUE)
         return;
@@ -356,7 +356,7 @@ static void visit_children_first(const std::string &dir, const std::function<voi
 static bool visit_siblings_first(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
 {
     WIN32_FIND_DATAW item{};
-    fs::guard<HANDLE, decltype(::FindClose)> ptr = ::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item);
+    fs::guard<HANDLE, decltype(::FindClose)> ptr(::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item), ::FindClose);
 
     if (ptr.val == INVALID_HANDLE_VALUE)
         return false;
@@ -397,7 +397,7 @@ static bool visit_siblings_first(const std::string &dir, const std::function<voi
 static void visit_deepest_first(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
 {
     WIN32_FIND_DATAW item{};
-    fs::guard<HANDLE, decltype(::FindClose)> ptr = ::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item);
+    fs::guard<HANDLE, decltype(::FindClose)> ptr(::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item), ::FindClose);
 
     if (ptr.val == INVALID_HANDLE_VALUE)
         return;

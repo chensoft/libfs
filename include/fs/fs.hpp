@@ -343,9 +343,11 @@ namespace fs
     class guard final
     {
     public:
-        guard(Value v = Value()) : val(v) {}
-        ~guard() { Deleter(_val); }
+        explicit guard(Deleter &d) : val(Value()), del(d) {}
+        guard(Value v, Deleter &d) : val(v), del(d) {}
+        ~guard() { del(val); }
 
         Value val;
+        Deleter &del;
     };
 }
