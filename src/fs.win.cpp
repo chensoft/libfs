@@ -169,7 +169,7 @@ bool fs::isWritable(const std::string &path)
 bool fs::isExecutable(const std::string &path)
 {
     DWORD type = 0;
-    return ::GetBinaryTypeW(fs::widen(path).c_str(), &type);
+    return fs::isDir(path) || ::GetBinaryTypeW(fs::widen(path).c_str(), &type);
 }
 
 // -----------------------------------------------------------------------------
@@ -178,7 +178,7 @@ fs::status fs::filetime(const std::string &path, struct ::timespec *access, stru
 {
     fs::guard<HANDLE, decltype(::CloseHandle)> handle(::CreateFileW(fs::widen(path).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL), ::CloseHandle);
     if (handle.val == INVALID_HANDLE_VALUE)
-        return status(::GetLastError()); // todo verify
+        return status(::GetLastError());
 
     FILETIME access_time{}, modify_time{}, create_time{};
     if (!::GetFileTime(handle.val, &create_time, &access_time, &modify_time))  // create time is the first
@@ -298,28 +298,6 @@ fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
     }
 
     return dir.empty() || !::CreateDirectoryW(fs::widen(dir).c_str(), NULL) || ::GetLastError() == ERROR_ALREADY_EXISTS ? status() : status(::GetLastError());
-}
-
-fs::status fs::remove(const std::string &path)
-{
-    // todo move to fs.cpp
-    if (!::remove(path.c_str()) || errno == ENOENT)
-        return {};
-
-    if (errno != ENOTEMPTY)
-        return status(errno);
-
-    auto error = 0;
-
-    fs::visit(path, [&](const std::string &item, bool *stop) {
-        if (::remove(item.c_str()))
-        {
-            *stop = true;
-            error = errno;
-        }
-    }, true, VisitStrategy::DeepestFirst);
-
-    return !error && ::remove(path.c_str()) ? status(errno) : status(error);
 }
 
 // -----------------------------------------------------------------------------

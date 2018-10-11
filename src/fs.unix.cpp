@@ -264,27 +264,6 @@ fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
     return dir.empty() || !::mkdir(dir.c_str(), mode) || errno == EEXIST ? status() : status(errno);
 }
 
-fs::status fs::remove(const std::string &path)
-{
-    if (!::remove(path.c_str()) || errno == ENOENT)
-        return {};
-
-    if (errno != ENOTEMPTY)
-        return status(errno);
-
-    auto error = 0;
-
-    fs::visit(path, [&] (const std::string &item, bool *stop) {
-        if (::remove(item.c_str()))
-        {
-            *stop = true;
-            error = errno;
-        }
-    }, true, VisitStrategy::DeepestFirst);
-
-    return !error && ::remove(path.c_str()) ? status(errno) : status(error);
-}
-
 // -----------------------------------------------------------------------------
 // traversal
 static void visit_children_first(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive)

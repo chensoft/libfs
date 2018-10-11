@@ -9,7 +9,7 @@
 
 TEST_CASE("fs.mode")
 {
-    fs::isReadable(fs::home());
-    fs::isWritable(fs::home());
-    fs::isExecutable(fs::home());
+    CHECK(fs::isReadable(fs::home()));
+    CHECK(fs::isWritable(fs::home()));
+    CHECK(fs::isExecutable(fs::home()));
 }

@@ -212,6 +212,28 @@ fs::status fs::rename(const std::string &path_old, const std::string &path_new)
     return !::rename(path_old.c_str(), path_new.c_str()) ? status() : status(errno);  // todo check errno in Windows, and can use in error_code?
 }
 
+fs::status fs::remove(const std::string &path)
+{
+    // todo check errno on Windows
+    if (!::remove(path.c_str()) || errno == ENOENT)
+        return {};
+
+    if (errno != ENOTEMPTY)
+        return status(errno);
+
+    auto error = 0;
+
+    fs::visit(path, [&](const std::string &item, bool *stop) {
+        if (::remove(item.c_str()))
+        {
+            *stop = true;
+            error = errno;
+        }
+    }, true, VisitStrategy::DeepestFirst);
+
+    return !error && ::remove(path.c_str()) ? status(errno) : status(error);
+}
+
 fs::status fs::copy(const std::string &source, std::string target)
 {
     // append source's basename if target is a directory
