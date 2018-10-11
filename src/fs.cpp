@@ -165,7 +165,7 @@ std::string fs::dirname(const std::string &path)
     auto drv = fs::drive(path);
     auto end = std::find_if(path.rbegin(), path.rend() - drv, [] (char c) { return fs::seps().find(c) == std::string::npos; });
     auto cur = std::find_if(end, path.rend() - drv, [] (char c) { return fs::seps().find(c) != std::string::npos; });
-    return std::string(path.begin(), (std::max)(path.begin() + drv, cur.base() - 1));
+    return std::string(path.begin(), cur != path.rend() - drv ? cur.base() - 1 : path.begin() + drv);
 }
 
 std::string fs::basename(const std::string &path, bool with_ext)

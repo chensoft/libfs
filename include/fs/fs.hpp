@@ -18,6 +18,7 @@ namespace fs
     // -------------------------------------------------------------------------
     // status
     // -------------------------------------------------------------------------
+    // todo some error codes can not use std::errc, such as CreateSymbolicLinkW
     class status
     {
     public:
@@ -342,7 +343,6 @@ namespace fs
     // -------------------------------------------------------------------------
     // helper
     // -------------------------------------------------------------------------
-
     template <typename Value, typename Deleter>
     class guard final
     {

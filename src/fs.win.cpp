@@ -110,11 +110,7 @@ std::string fs::realpath(std::string path)
 // check
 bool fs::isExist(const std::string &path, bool follow_symlink)
 {
-    if (follow_symlink)
-        return false;  // todo
-
-    // todo should use CreateFile with OF_EXIST?
-    return ::GetFileAttributesW(fs::widen(path).c_str()) != INVALID_FILE_ATTRIBUTES;
+    return ::GetFileAttributesW(fs::widen(follow_symlink ? fs::realpath(path) : path).c_str()) != INVALID_FILE_ATTRIBUTES;
 }
 
 bool fs::isEmpty(const std::string &path)
@@ -146,17 +142,14 @@ bool fs::isDir(const std::string &path, bool follow_symlink)
 
 bool fs::isFile(const std::string &path, bool follow_symlink)
 {
-    if (follow_symlink)
-        return false;  // todo
-
-    DWORD attr = ::GetFileAttributesW(fs::widen(path).c_str());
-    return attr != INVALID_FILE_ATTRIBUTES && attr & ~FILE_ATTRIBUTE_DIRECTORY;
+    DWORD attr = ::GetFileAttributesW(fs::widen(follow_symlink ? fs::realpath(path) : path).c_str());
+    return attr != INVALID_FILE_ATTRIBUTES && !(attr & FILE_ATTRIBUTE_DIRECTORY);
 }
 
 bool fs::isSymlink(const std::string &path)
 {
-    // todo
-    return false;
+    DWORD attr = ::GetFileAttributesW(fs::widen(path).c_str());
+    return attr != INVALID_FILE_ATTRIBUTES && !(attr & FILE_ATTRIBUTE_REPARSE_POINT);
 }
 
 // -----------------------------------------------------------------------------
@@ -335,7 +328,7 @@ fs::status fs::symlink(const std::string &path, const std::string &link)
     if (!result)
         return result;
 
-    return !::CreateSymbolicLinkW(fs::widen(link).c_str(), fs::widen(path).c_str(), 0) ? status() : status(::GetLastError());
+    return ::CreateSymbolicLinkW(fs::widen(link).c_str(), fs::widen(path).c_str(), 0) ? status() : status(::GetLastError());
 }
 
 // -----------------------------------------------------------------------------
