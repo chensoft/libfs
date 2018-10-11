@@ -285,15 +285,6 @@ fs::status fs::remove(const std::string &path)
     return !error && ::remove(path.c_str()) ? status(errno) : status(error);
 }
 
-fs::status fs::symlink(const std::string &path, const std::string &link)
-{
-    auto result = fs::mkdir(fs::dirname(link));
-    if (!result)
-        return result;
-
-    return !::symlink(path.c_str(), link.c_str()) ? status() : status(errno);
-}
-
 // -----------------------------------------------------------------------------
 // traversal
 static void visit_children_first(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive)

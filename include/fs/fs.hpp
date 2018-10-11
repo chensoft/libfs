@@ -287,12 +287,8 @@ namespace fs
     // *) if target is a existing directory then copy source into the directory
     // *) if target is not a directory then treat target as the final path
     // *) if source is a directory then copy it recursively
+    // @note do not work on symlink
     status copy(const std::string &source, std::string target);
-
-    // Symbol link file or directory
-    // @param path the original object
-    // @param link the symbolic link
-    status symlink(const std::string &path, const std::string &link);
 
     // -------------------------------------------------------------------------
     // traversal

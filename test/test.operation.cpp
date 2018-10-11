@@ -41,16 +41,11 @@ TEST_CASE("fs.operation")
 
     // symlink
     CHECK(fs::mkdir("dir"));
-    CHECK(fs::symlink("dir", "link"));
-    CHECK(fs::isSymlink("link"));
-    CHECK(fs::isDir("link"));
-    CHECK_FALSE(fs::isDir("link", false));
+    CHECK_FALSE(fs::isSymlink("dir"));
 
     // copy
     CHECK(fs::copy("x", "y"));
     CHECK(fs::copy("file.txt", "copy.txt"));
-    CHECK(fs::copy("link", "link-copy"));
     CHECK(fs::isDir("y", false));
     CHECK(fs::isFile("copy.txt", false));
-    CHECK(fs::isSymlink("link-copy"));
 }

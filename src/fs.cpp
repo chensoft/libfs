@@ -241,11 +241,7 @@ fs::status fs::copy(const std::string &source, std::string target)
     if (fs::isFile(source, false))
         return fs::write(target, fs::read(source));
 
-    // if source is symlink
-    if (fs::isSymlink(source))
-        return fs::symlink(source, target);
-
-    return status(std::errc::invalid_argument);
+    return status(std::errc::not_supported);
 }
 
 // -----------------------------------------------------------------------------
