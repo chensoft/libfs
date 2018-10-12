@@ -335,20 +335,4 @@ namespace fs
 
     // todo Resize file to specific size
     status resize(const std::string &file, std::size_t size);
-
-    // -------------------------------------------------------------------------
-    // helper
-    // -------------------------------------------------------------------------
-    // todo move into win.cpp
-    template <typename Value, typename Deleter>
-    class guard final
-    {
-    public:
-        explicit guard(Deleter &d) : val(Value()), del(d) {}
-        guard(Value v, Deleter &d) : val(v), del(d) {}
-        ~guard() { del(val); }
-
-        Value val;
-        Deleter &del;
-    };
 }
