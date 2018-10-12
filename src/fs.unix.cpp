@@ -19,7 +19,20 @@
 #include <pwd.h>
 
 // todo PATH_MAX is not enough, check path greater than PATH_MAX
-// todo char and struct init
+
+// -----------------------------------------------------------------------------
+// helper
+namespace fs
+{
+    class dir_handle final
+    {
+    public:
+        dir_handle(DIR *d = nullptr) : val(d) {}
+        ~dir_handle() { val ? ::closedir(val) : 0; }
+
+        DIR *val;
+    };
+}
 
 // -----------------------------------------------------------------------------
 // path
@@ -60,7 +73,7 @@ std::string fs::tmp()
 
 std::string fs::cwd()
 {
-    char buf[PATH_MAX];
+    char buf[PATH_MAX]{};
     return ::getcwd(buf, sizeof(buf)) ? fs::prune(buf) : "";
 }
 
@@ -71,7 +84,6 @@ char fs::sep()
 
 std::vector<std::string> fs::drives()
 {
-    // todo return all mounted drives
     return {"/"};
 }
 
@@ -84,7 +96,7 @@ std::string fs::realpath(std::string path)
     if (fs::isRelative(path))
         path.replace(0, 0, fs::cwd() + fs::sep());
 
-    char buf[PATH_MAX];
+    char buf[PATH_MAX]{};
     return ::realpath(path.c_str(), buf) ? buf : path;
 }
 
@@ -160,7 +172,7 @@ bool fs::isExecutable(const std::string &path)
 // property
 fs::status fs::filetime(const std::string &path, struct ::timespec *access, struct ::timespec *modify, struct ::timespec *create)
 {
-    struct ::stat st {};
+    struct ::stat st{};
     if (::stat(path.c_str(), &st))
         return status(errno);
 
@@ -196,14 +208,14 @@ struct ::timespec fs::atime(const std::string &path)
 
 struct ::timespec fs::mtime(const std::string &path)
 {
-    struct ::timespec time {};
+    struct ::timespec time{};
     fs::filetime(path, nullptr, &time, nullptr);
     return time;
 }
 
 struct ::timespec fs::ctime(const std::string &path)
 {
-    struct ::timespec time {};
+    struct ::timespec time{};
     fs::filetime(path, nullptr, nullptr, &time);
     return time;
 }
@@ -267,17 +279,15 @@ fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
 static void visit_children_first(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive)
 {
     // todo use guard
-    auto deleter = [] (DIR *ptr) { ::closedir(ptr); };
-    std::unique_ptr<DIR, decltype(deleter)> ptr(::opendir(dir.c_str()), deleter);
-
-    if (!ptr)
+    fs::dir_handle ptr = ::opendir(dir.c_str());
+    if (!ptr.val)
         return;
 
     dirent *item{};
     bool    stop{};
 
     // todo do not recursive?
-    while ((item = ::readdir(ptr.get())))
+    while ((item = ::readdir(ptr.val)))
     {
         if ((item->d_name[0] == '.' && !item->d_name[1]) || (item->d_name[0] == '.' && item->d_name[1] == '.' && !item->d_name[2]))
             continue;
@@ -296,18 +306,16 @@ static void visit_children_first(const std::string &dir, const std::function<voi
 
 static bool visit_siblings_first(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive)
 {
+    fs::dir_handle ptr = ::opendir(dir.c_str());
+    if (!ptr.val)
+        return false;
+
     dirent *item{};
     bool    stop{};
 
-    auto deleter = [] (DIR *ptr) { ::closedir(ptr); };
-    std::unique_ptr<DIR, decltype(deleter)> ptr(::opendir(dir.c_str()), deleter);
-
-    if (!ptr)
-        return false;
-
     std::queue<std::string> queue;
 
-    while ((item = ::readdir(ptr.get())))
+    while ((item = ::readdir(ptr.val)))
     {
         if ((item->d_name[0] == '.' && !item->d_name[1]) || (item->d_name[0] == '.' && item->d_name[1] == '.' && !item->d_name[2]))
             continue;
@@ -337,16 +345,14 @@ static bool visit_siblings_first(const std::string &dir, const std::function<voi
 
 static void visit_deepest_first(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive)
 {
-    auto deleter = [] (DIR *ptr) { ::closedir(ptr); };
-    std::unique_ptr<DIR, decltype(deleter)> ptr(::opendir(dir.c_str()), deleter);
-
-    if (!ptr)
+    fs::dir_handle ptr = ::opendir(dir.c_str());
+    if (!ptr.val)
         return;
 
     dirent *item{};
     bool    stop{};
 
-    while ((item = ::readdir(ptr.get())))
+    while ((item = ::readdir(ptr.val)))
     {
         if ((item->d_name[0] == '.' && !item->d_name[1]) || (item->d_name[0] == '.' && item->d_name[1] == '.' && !item->d_name[2]))
             continue;
