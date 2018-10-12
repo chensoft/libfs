@@ -343,7 +343,7 @@ fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
             return result;
     }
 
-    return dir.empty() || ::CreateDirectoryW(fs::widen(dir).c_str(), NULL) || ::GetLastError() == ERROR_ALREADY_EXISTS ? status() : status(::GetLastError());
+    return dir.empty() || fs::isDir(dir) || ::CreateDirectoryW(fs::widen(dir).c_str(), NULL) || ::GetLastError() == ERROR_ALREADY_EXISTS ? status() : status(::GetLastError());
 }
 
 // -----------------------------------------------------------------------------
