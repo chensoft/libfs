@@ -18,8 +18,6 @@
 #include <utime.h>
 #include <pwd.h>
 
-// todo PATH_MAX is not enough, check path greater than PATH_MAX
-
 // -----------------------------------------------------------------------------
 // helper
 namespace fs
@@ -271,7 +269,7 @@ fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
             return result;
     }
 
-    return dir.empty() || !::mkdir(dir.c_str(), mode) || errno == EEXIST ? status() : status(errno);
+    return dir.empty() || !::mkdir(dir.c_str(), mode) || errno == EEXIST || errno == EISDIR ? status() : status(errno);
 }
 
 fs::status fs::rename(const std::string &path_old, const std::string &path_new)

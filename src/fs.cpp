@@ -262,8 +262,9 @@ fs::status fs::write(const std::string &file, const std::string &data)
 
 fs::status fs::write(const std::string &file, const void *data, std::size_t size)
 {
-    if (!fs::mkdir(fs::dirname(file)))
-        return status(errno);
+    auto result = fs::mkdir(fs::dirname(file));
+    if (!result)
+        return result;
 
     std::ofstream out(file, std::ios_base::binary);
     if (!out)
@@ -279,8 +280,9 @@ fs::status fs::append(const std::string &file, const std::string &data)
 
 fs::status fs::append(const std::string &file, const void *data, std::size_t size)
 {
-    if (!fs::mkdir(fs::dirname(file)))
-        return status(errno);
+    auto result = fs::mkdir(fs::dirname(file));
+    if (!result)
+        return result;
 
     std::ofstream out(file, std::ios_base::binary | std::ios_base::app);
     if (!out)

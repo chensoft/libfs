@@ -18,7 +18,6 @@ namespace fs
     // -------------------------------------------------------------------------
     // status
     // -------------------------------------------------------------------------
-    // todo some error codes can not use std::errc, such as CreateSymbolicLinkW
     class status
     {
     public:

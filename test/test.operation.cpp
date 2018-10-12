@@ -25,6 +25,7 @@ TEST_CASE("fs.operation")
 
     // mkdir
     CHECK(fs::mkdir(""));
+    CHECK(fs::mkdir("/"));
     CHECK(fs::mkdir("a/b/c"));
     CHECK(fs::isDir("a/b/c"));
 
