@@ -1,4 +1,4 @@
-add_executable(fs-test "")
+add_executable(fs-test)
 
 # environment
 set_target_properties(

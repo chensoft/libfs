@@ -306,6 +306,10 @@ namespace fs
     void visit(const std::string &dir, const std::function<void (const std::string &path)> &callback, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
     void visit(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
 
+    // Collect all items in the directory, exclude '.' and '..'
+    // todo provide parameter return 'absolute' or relative path
+    std::vector<std::string> collect(const std::string &dir, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
+
     // -------------------------------------------------------------------------
     // IO
     // -------------------------------------------------------------------------

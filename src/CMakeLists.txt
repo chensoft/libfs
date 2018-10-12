@@ -1,4 +1,4 @@
-add_library(fs "")
+add_library(fs)
 
 # environment
 set_target_properties(

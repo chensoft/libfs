@@ -31,6 +31,7 @@ TEST_CASE("fs.check")
     CHECK(fs::write(root + "file-real", "abc"));
     CHECK_FALSE(fs::isEmpty(root + "file-real"));
 
+    CHECK(fs::touch(root + "dir-real/file-inside"));
     CHECK(fs::isEmpty(root + "dir-real"));
 
     // type

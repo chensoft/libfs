@@ -233,6 +233,17 @@ void fs::visit(const std::string &dir, const std::function<void (const std::stri
     }, recursive, strategy);
 }
 
+std::vector<std::string> fs::collect(const std::string &dir, bool recursive, VisitStrategy strategy)
+{
+    std::vector<std::string> ret;
+
+    fs::visit(dir, [&ret] (const std::string &path) {
+        ret.emplace_back(path);
+    }, recursive, strategy);
+
+    return ret;
+}
+
 // -----------------------------------------------------------------------------
 // IO
 std::string fs::read(const std::string &file)
