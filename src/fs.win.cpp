@@ -194,9 +194,8 @@ fs::status fs::filetime(const std::string &path, struct ::timespec *access, stru
         large_time.LowPart  = access_time.dwLowDateTime;
         large_time.HighPart = access_time.dwHighDateTime;
 
-        // todo check
         access->tv_sec  = static_cast<decltype(access->tv_sec)>(large_time.QuadPart / ticks - epoch);
-        access->tv_nsec = static_cast<decltype(access->tv_nsec)>(large_time.QuadPart - access->tv_sec * ticks + epoch);
+        access->tv_nsec = static_cast<decltype(access->tv_nsec)>(large_time.QuadPart - large_time.QuadPart / ticks * ticks);
     }
 
     if (modify)
@@ -204,9 +203,8 @@ fs::status fs::filetime(const std::string &path, struct ::timespec *access, stru
         large_time.LowPart = modify_time.dwLowDateTime;
         large_time.HighPart = modify_time.dwHighDateTime;
 
-        // todo check
-        modify->tv_sec = static_cast<decltype(modify->tv_sec)>(large_time.QuadPart / ticks - epoch);
-        modify->tv_nsec = static_cast<decltype(modify->tv_nsec)>(large_time.QuadPart - modify->tv_sec * ticks + epoch);
+        modify->tv_sec  = static_cast<decltype(modify->tv_sec)>(large_time.QuadPart / ticks - epoch);
+        modify->tv_nsec = static_cast<decltype(modify->tv_nsec)>(large_time.QuadPart - large_time.QuadPart / ticks * ticks);
     }
 
     if (create)
@@ -214,9 +212,8 @@ fs::status fs::filetime(const std::string &path, struct ::timespec *access, stru
         large_time.LowPart = create_time.dwLowDateTime;
         large_time.HighPart = create_time.dwHighDateTime;
 
-        // todo check
-        create->tv_sec = static_cast<decltype(create->tv_sec)>(large_time.QuadPart / ticks - epoch);
-        create->tv_nsec = static_cast<decltype(create->tv_nsec)>(large_time.QuadPart - create->tv_sec * ticks + epoch);
+        create->tv_sec  = static_cast<decltype(create->tv_sec)>(large_time.QuadPart / ticks - epoch);
+        create->tv_nsec = static_cast<decltype(create->tv_nsec)>(large_time.QuadPart - large_time.QuadPart / ticks * ticks);
     }
 
     return {};
@@ -273,7 +270,6 @@ fs::status fs::touch(const std::string &file, std::time_t atime, std::time_t mti
     if (!result)
         return result;
 
-    // todo use CreateFile and SetFileTime
     // create file if not exist
     auto deleter = [](FILE *ptr) { ::fclose(ptr); };
     std::unique_ptr<FILE, decltype(deleter)> handle(::fopen(file.c_str(), "ab+"), deleter);
@@ -297,7 +293,7 @@ fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
             return result;
     }
 
-    return dir.empty() || !::CreateDirectoryW(fs::widen(dir).c_str(), NULL) || ::GetLastError() == ERROR_ALREADY_EXISTS ? status() : status(::GetLastError());
+    return dir.empty() || ::CreateDirectoryW(fs::widen(dir).c_str(), NULL) || ::GetLastError() == ERROR_ALREADY_EXISTS ? status() : status(::GetLastError());
 }
 
 // -----------------------------------------------------------------------------

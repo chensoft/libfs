@@ -215,6 +215,7 @@ fs::status fs::rename(const std::string &path_old, const std::string &path_new)
 fs::status fs::remove(const std::string &path)
 {
     // todo check errno on Windows
+    // todo should use unicode version on Windows
     if (!::remove(path.c_str()) || errno == ENOENT)
         return {};
 
