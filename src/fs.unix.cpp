@@ -7,10 +7,10 @@
 #if defined(__unix__) || defined(__APPLE__)
 
 #include "fs/fs.hpp"
+#include <fstream>
 #include <cstring>
 #include <climits>
 #include <cstdio>
-#include <memory>
 #include <queue>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -239,10 +239,8 @@ fs::status fs::touch(const std::string &file, std::time_t atime, std::time_t mti
         return result;
 
     // create file if not exist
-    auto deleter = [] (FILE *ptr) { ::fclose(ptr); };
-    std::unique_ptr<FILE, decltype(deleter)> handle(::fopen(file.c_str(), "ab+"), deleter);
-
-    if (!handle)
+    std::ofstream out(file, std::ios_base::binary | std::ios_base::app);
+    if (!out)
         return status(errno);
 
     // modify mtime and atime
@@ -268,6 +266,7 @@ fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
 // traversal
 static void visit_children_first(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive)
 {
+    // todo use guard
     auto deleter = [] (DIR *ptr) { ::closedir(ptr); };
     std::unique_ptr<DIR, decltype(deleter)> ptr(::opendir(dir.c_str()), deleter);
 

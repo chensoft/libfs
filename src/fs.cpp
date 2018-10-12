@@ -6,16 +6,11 @@
  */
 #include "fs/fs.hpp"
 #include <algorithm>
+#include <fstream>
 #include <codecvt>
-#include <memory>
 #include <random>
 #include <locale>
 #include <cctype>
-
-#ifdef _WIN32
-    #pragma warning(push)
-    #pragma warning(disable:4996)  // fopen
-#endif
 
 // -----------------------------------------------------------------------------
 // utils
@@ -285,14 +280,15 @@ std::string fs::read(const std::string &file)
 
 std::string fs::read(const std::string &file, std::size_t start, std::size_t length)
 {
-    auto deleter = [] (FILE *ptr) { ::fclose(ptr); };
-    std::unique_ptr<FILE, decltype(deleter)> in(::fopen(file.c_str(), "rb"), deleter);
+    std::ifstream in(file, std::ios_base::binary);
 
-    if (!in || (start && ::fseek(in.get(), start, SEEK_SET)))
+    if (!in || (start && !in.seekg(start)) || !length)
         return "";
 
     std::string ret(length, '\0');
-    ret.resize(::fread(&ret[0], 1, length, in.get()));
+    in.read(&ret[0], static_cast<std::streamsize>(length));
+    ret.resize(static_cast<std::size_t>(in.gcount()));
+
     return ret;
 }
 
@@ -307,12 +303,11 @@ fs::status fs::write(const std::string &file, const void *data, std::size_t size
     if (!fs::mkdir(fs::dirname(file)))
         return status(errno);
 
-    auto deleter = [] (FILE *ptr) { ::fclose(ptr); };
-    std::unique_ptr<FILE, decltype(deleter)> out(::fopen(file.c_str(), "wb"), deleter);
+    std::ofstream out(file, std::ios_base::binary);
     if (!out)
         return status(errno);
 
-    return ::fwrite(data, 1, size, out.get()) == size ? status() : status(errno);
+    return out.write(static_cast<const char*>(data), size) ? status() : status(errno);
 }
 
 fs::status fs::append(const std::string &file, const std::string &data)
@@ -325,14 +320,9 @@ fs::status fs::append(const std::string &file, const void *data, std::size_t siz
     if (!fs::mkdir(fs::dirname(file)))
         return status(errno);
 
-    auto deleter = [] (FILE *ptr) { ::fclose(ptr); };
-    std::unique_ptr<FILE, decltype(deleter)> out(::fopen(file.c_str(), "ab+"), deleter);
+    std::ofstream out(file, std::ios_base::binary | std::ios_base::app);
     if (!out)
         return status(errno);
 
-    return ::fwrite(data, 1, size, out.get()) == size ? status() : status(errno);
+    return out.write(static_cast<const char*>(data), size) ? status() : status(errno);
 }
-
-#ifdef _WIN32
-    #pragma warning(pop)
-#endif

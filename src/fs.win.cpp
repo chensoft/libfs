@@ -15,9 +15,6 @@
 
 #pragma comment(lib, "userenv.lib")
 
-#pragma warning(push)
-#pragma warning(disable:4996)  // fopen
-
 // todo check errno
 
 // -----------------------------------------------------------------------------
@@ -271,10 +268,8 @@ fs::status fs::touch(const std::string &file, std::time_t atime, std::time_t mti
         return result;
 
     // create file if not exist
-    auto deleter = [](FILE *ptr) { ::fclose(ptr); };
-    std::unique_ptr<FILE, decltype(deleter)> handle(::fopen(file.c_str(), "ab+"), deleter);
-
-    if (!handle)
+    std::ofstream out(file, std::ios_base::binary | std::ios_base::app);
+    if (!out)
         return status(errno);
 
     // modify mtime and atime
@@ -414,7 +409,5 @@ void fs::visit(const std::string &dir, const std::function<void(const std::strin
         break;
     }
 }
-
-#pragma warning(pop)
 
 #endif

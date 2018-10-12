@@ -339,6 +339,7 @@ namespace fs
     // -------------------------------------------------------------------------
     // helper
     // -------------------------------------------------------------------------
+    // todo move into win.cpp
     template <typename Value, typename Deleter>
     class guard final
     {
