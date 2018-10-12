@@ -121,8 +121,6 @@ namespace fs
     // e.g: "~xxx" -> "~xxx" because ~ is part of the name
     std::string expand(std::string path);
 
-    // todo expand variables
-
     // Tokenize the path into multiple segments, the first item is always the drive letter
     // *) will use empty string if no drives
     // *) will skip the duplicate separators
@@ -309,12 +307,6 @@ namespace fs
     void visit(const std::string &dir, const std::function<void (const std::string &path)> &callback, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
     void visit(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
 
-    // Collect all items in the directory, exclude '.' and '..'
-    // todo provide parameter return 'absolute' or relative path
-    std::vector<std::string> collect(const std::string &dir, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
-
-    // todo provide find function, search files even by regex, like 'find' utility, support unix glob style * ? [] [!]
-
     // -------------------------------------------------------------------------
     // IO
     // -------------------------------------------------------------------------
@@ -332,7 +324,4 @@ namespace fs
     // Append data to the file
     status append(const std::string &file, const std::string &data);
     status append(const std::string &file, const void *data, std::size_t size);
-
-    // todo Resize file to specific size
-    status resize(const std::string &file, std::size_t size);
 }

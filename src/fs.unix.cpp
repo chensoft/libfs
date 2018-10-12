@@ -274,11 +274,46 @@ fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
     return dir.empty() || !::mkdir(dir.c_str(), mode) || errno == EEXIST ? status() : status(errno);
 }
 
+fs::status fs::rename(const std::string &path_old, const std::string &path_new)
+{
+    // remove existence path
+    auto result = fs::remove(path_new);
+    if (!result)
+        return result;
+
+    // create new directory
+    result = fs::mkdir(fs::dirname(path_new));
+    if (!result)
+        return result;
+
+    return !::rename(path_old.c_str(), path_new.c_str()) ? status() : status(errno);
+}
+
+fs::status fs::remove(const std::string &path)
+{
+    if (!::remove(path.c_str()) || errno == ENOENT)
+        return {};
+
+    if (errno != ENOTEMPTY)
+        return status(errno);
+
+    auto error = 0;
+
+    fs::visit(path, [&](const std::string &item, bool *stop) {
+        if (::remove(item.c_str()))
+        {
+            *stop = true;
+            error = errno;
+        }
+    }, true, VisitStrategy::DeepestFirst);
+
+    return !error && ::remove(path.c_str()) ? status(errno) : status(error);
+}
+
 // -----------------------------------------------------------------------------
 // traversal
 static void visit_children_first(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive)
 {
-    // todo use guard
     fs::dir_handle ptr = ::opendir(dir.c_str());
     if (!ptr.val)
         return;
@@ -286,7 +321,6 @@ static void visit_children_first(const std::string &dir, const std::function<voi
     dirent *item{};
     bool    stop{};
 
-    // todo do not recursive?
     while ((item = ::readdir(ptr.val)))
     {
         if ((item->d_name[0] == '.' && !item->d_name[1]) || (item->d_name[0] == '.' && item->d_name[1] == '.' && !item->d_name[2]))
@@ -386,16 +420,5 @@ void fs::visit(const std::string &dir, const std::function<void (const std::stri
             break;
     }
 }
-
-//std::vector<std::string> fs::collect(const std::string &dir, bool recursive, VisitStrategy strategy)
-//{
-//    std::vector<std::string> ret;
-//
-//    fs::visit(dir, [&ret] (const std::string &path) {
-//        ret.emplace_back(path);
-//    }, recursive, strategy);
-//
-//    return ret;
-//}
 
 #endif

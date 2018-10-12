@@ -16,8 +16,6 @@
 
 #pragma comment(lib, "userenv.lib")
 
-// todo check errno
-
 // -----------------------------------------------------------------------------
 // helper
 namespace fs
@@ -301,6 +299,39 @@ fs::status fs::touch(const std::string &file, std::time_t atime, std::time_t mti
     return !::_wutime(fs::widen(file).c_str(), &time) ? status() : status(errno);
 }
 
+fs::status fs::rename(const std::string &path_old, const std::string &path_new)
+{
+    // remove existence path
+    auto result = fs::remove(path_new);
+    if (!result)
+        return result;
+
+    // create new directory
+    result = fs::mkdir(fs::dirname(path_new));
+    if (!result)
+        return result;
+
+    return !::_wrename(fs::widen(path_old).c_str(), fs::widen(path_new).c_str()) ? status() : status(errno);
+}
+
+fs::status fs::remove(const std::string &path)
+{
+    if (::DeleteFileW(fs::widen(path).c_str()) || ::RemoveDirectoryW(fs::widen(path).c_str()) || ::GetLastError() == ERROR_FILE_NOT_FOUND)
+        return {};
+
+    auto error = 0;
+
+    fs::visit(path, [&](const std::string &item, bool *stop) {
+        if (!::DeleteFileW(fs::widen(item).c_str()) && !::RemoveDirectoryW(fs::widen(item).c_str()))
+        {
+            *stop = true;
+            error = ::GetLastError();
+        }
+    }, true, VisitStrategy::DeepestFirst);
+
+    return error ? status(error) : (::DeleteFileW(fs::widen(path).c_str()) || ::RemoveDirectoryW(fs::widen(path).c_str()) ? status() : status(::GetLastError()));
+}
+
 fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
 {
     auto parent = fs::dirname(dir);
@@ -327,7 +358,6 @@ static void visit_children_first(const std::string &dir, const std::function<voi
 
     bool stop = false;
 
-    // todo do not recursive?
     do
     {
         std::string name(fs::narrow(item.cFileName));
