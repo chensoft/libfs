@@ -18,6 +18,7 @@ namespace fs
     // -------------------------------------------------------------------------
     // status
     // -------------------------------------------------------------------------
+
     class status
     {
     public:
@@ -39,7 +40,7 @@ namespace fs
     // wstring to utf-8
     std::string narrow(const std::wstring &wstr);
 
-    // Remove the separator at the end, preserve drive
+    // Remove the separator at the end, preserve drive letters
     std::string prune(std::string dir, const std::string &drv = "");
 
     // -------------------------------------------------------------------------
@@ -73,11 +74,11 @@ namespace fs
     // Separator on all platforms
     std::string seps();
 
-    // Get mount points or system drives
+    // Get system drives
     // @result "/" on Unix, "C:\", "D:\" ... on Windows
     std::vector<std::string> drives();
 
-    // Get path's mount point or drive size
+    // Get path's drive size
     // e.g: "" -> ""
     // e.g: "file.txt" -> ""
     // e.g: "/usr/local" -> "/"

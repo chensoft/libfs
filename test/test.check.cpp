@@ -32,7 +32,7 @@ TEST_CASE("fs.check")
     CHECK_FALSE(fs::isEmpty(root + "file-real"));
 
     CHECK(fs::touch(root + "dir-real/file-inside"));
-    CHECK(fs::isEmpty(root + "dir-real"));
+    CHECK_FALSE(fs::isEmpty(root + "dir-real"));
 
     // type
     CHECK_FALSE(fs::isDir(root + "file-real"));

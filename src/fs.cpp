@@ -26,12 +26,9 @@ std::string fs::narrow(const std::wstring &wstr)
 
 std::string fs::prune(std::string dir, const std::string &drv)
 {
-    auto len = !drv.empty() ? drv.size() : fs::drive(dir);
-
-    dir.erase(std::find_if(dir.rbegin(), dir.rend() - len, [=] (char c) {
+    dir.erase(std::find_if(dir.rbegin(), dir.rend() - (!drv.empty() ? drv.size() : fs::drive(dir)), [=] (char c) {
         return fs::seps().find(c) == std::string::npos;
     }).base(), dir.end());
-
     return dir;
 }
 
@@ -237,7 +234,7 @@ std::vector<std::string> fs::collect(const std::string &dir, bool recursive, Vis
 {
     std::vector<std::string> ret;
 
-    fs::visit(dir, [&ret] (const std::string &path) {
+    fs::visit(dir, [&] (const std::string &path) {
         ret.emplace_back(path);
     }, recursive, strategy);
 

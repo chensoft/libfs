@@ -331,7 +331,7 @@ static void visit_children_first(const std::string &dir, const std::function<voi
         if (stop)
             return;
 
-        if (recursive && (item->d_type == DT_DIR || item->d_type == DT_UNKNOWN))
+        if (recursive && (item->d_type == DT_DIR || item->d_type == DT_UNKNOWN))  // some filesystem will return DT_UNKNOWN
             fs::visit(path, callback, recursive);
     }
 }
