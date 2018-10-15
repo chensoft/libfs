@@ -16,11 +16,16 @@ TEST_CASE("fs.traversal")
     CHECK(fs::touch(tmp + "/usr/bin/zip"));
     CHECK(fs::touch(tmp + "/usr/lib/libz.a"));
 
-    std::vector<std::string> children_first = {tmp + "/usr/bin", tmp + "/usr/bin/zip", tmp + "/usr/lib", tmp + "/usr/lib/libz.a"};
-    std::vector<std::string> siblings_first = {tmp + "/usr/bin", tmp + "/usr/lib", tmp + "/usr/bin/zip", tmp + "/usr/lib/libz.a"};
-    std::vector<std::string> deepest_first  = {tmp + "/usr/bin/zip", tmp + "/usr/bin", tmp + "/usr/lib/libz.a", tmp + "/usr/lib"};
+    auto uni = [](std::string path) {
+        std::replace_if(path.begin(), path.end(), [](char c) { return fs::seps().find(c) != std::string::npos; }, fs::sep());
+        return path;
+    };
 
-    CHECK(fs::collect(tmp + "/usr", true, fs::VisitStrategy::ChildrenFirst) == children_first);
-    CHECK(fs::collect(tmp + "/usr", true, fs::VisitStrategy::SiblingsFirst) == siblings_first);
-    CHECK(fs::collect(tmp + "/usr", true, fs::VisitStrategy::DeepestFirst)  == deepest_first);
+    std::vector<std::string> children_first = {tmp + uni("/usr/bin"), tmp + uni("/usr/bin/zip"), tmp + uni("/usr/lib"), tmp + uni("/usr/lib/libz.a")};
+    std::vector<std::string> siblings_first = {tmp + uni("/usr/bin"), tmp + uni("/usr/lib"), tmp + uni("/usr/bin/zip"), tmp + uni("/usr/lib/libz.a")};
+    std::vector<std::string> deepest_first  = {tmp + uni("/usr/bin/zip"), tmp + uni("/usr/bin"), tmp + uni("/usr/lib/libz.a"), tmp + uni("/usr/lib")};
+
+    CHECK(fs::collect(tmp + uni("/usr"), true, fs::VisitStrategy::ChildrenFirst) == children_first);
+    CHECK(fs::collect(tmp + uni("/usr"), true, fs::VisitStrategy::SiblingsFirst) == siblings_first);
+    CHECK(fs::collect(tmp + uni("/usr"), true, fs::VisitStrategy::DeepestFirst)  == deepest_first);
 }

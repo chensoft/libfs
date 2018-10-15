@@ -123,7 +123,7 @@ bool fs::isEmpty(const std::string &path)
     // check dir has entries
     bool empty = true;
 
-    fs::visit(path, [&] (const std::string &, bool *stop) {
+    fs::visit(path, [&](const std::string &, bool *stop) {
         empty = false;
         *stop = true;
     }, false);

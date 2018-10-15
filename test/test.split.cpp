@@ -49,9 +49,9 @@ TEST_CASE("fs.split")
     {
         typedef std::vector<std::string> tokenize_type;
 
-        auto tokenize = [] (const std::string &path) {
+        auto tokenize = [](const std::string &path) {
             tokenize_type ret;
-            fs::tokenize(path, [&] (std::string component, char separator) {
+            fs::tokenize(path, [&](std::string component, char separator) {
                 ret.emplace_back(std::move(component));
                 ret.emplace_back(separator ? 1 : 0, separator);
             });

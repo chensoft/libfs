@@ -26,7 +26,7 @@ std::string fs::narrow(const std::wstring &wstr)
 
 std::string fs::prune(std::string dir, const std::string &drv)
 {
-    dir.erase(std::find_if(dir.rbegin(), dir.rend() - (!drv.empty() ? drv.size() : fs::drive(dir)), [=] (char c) {
+    dir.erase(std::find_if(dir.rbegin(), dir.rend() - (!drv.empty() ? drv.size() : fs::drive(dir)), [=](char c) {
         return fs::seps().find(c) == std::string::npos;
     }).base(), dir.end());
     return dir;
@@ -79,7 +79,7 @@ std::string fs::normalize(std::string path)
 
     bool drive = false;
 
-    fs::tokenize(fs::expand(std::move(path)), [&] (std::string component, char separator) {
+    fs::tokenize(fs::expand(std::move(path)), [&](std::string component, char separator) {
         // add drive letter
         if (!drive)
         {
@@ -155,16 +155,16 @@ void fs::tokenize(const std::string &path, const std::function<void (std::string
 std::string fs::dirname(const std::string &path)
 {
     auto drv = fs::drive(path);
-    auto end = std::find_if(path.rbegin(), path.rend() - drv, [] (char c) { return fs::seps().find(c) == std::string::npos; });
-    auto cur = std::find_if(end, path.rend() - drv, [] (char c) { return fs::seps().find(c) != std::string::npos; });
+    auto end = std::find_if(path.rbegin(), path.rend() - drv, [](char c) { return fs::seps().find(c) == std::string::npos; });
+    auto cur = std::find_if(end, path.rend() - drv, [](char c) { return fs::seps().find(c) != std::string::npos; });
     return std::string(path.begin(), cur != path.rend() - drv ? cur.base() - 1 : path.begin() + drv);
 }
 
 std::string fs::basename(const std::string &path, bool with_ext)
 {
     auto drv = fs::drive(path);
-    auto end = std::find_if(path.rbegin(), path.rend() - drv, [] (char c) { return fs::seps().find(c) == std::string::npos; });
-    auto cur = std::find_if(end, path.rend() - drv, [] (char c) { return fs::seps().find(c) != std::string::npos; });
+    auto end = std::find_if(path.rbegin(), path.rend() - drv, [](char c) { return fs::seps().find(c) == std::string::npos; });
+    auto cur = std::find_if(end, path.rend() - drv, [](char c) { return fs::seps().find(c) != std::string::npos; });
     auto ext = with_ext ? cur : std::find(end, cur, '.');
     return std::string(cur.base(), ext == cur ? end.base() : ext.base() - 1);
 }
@@ -202,7 +202,7 @@ fs::status fs::copy(const std::string &source, std::string target)
         if (!result)
             return result;
 
-        fs::visit(source, [&] (const std::string &path, bool *stop) {
+        fs::visit(source, [&](const std::string &path, bool *stop) {
             result = fs::copy(path, target);
             *stop  = !result;
         }, false);
@@ -225,7 +225,7 @@ fs::status fs::copy(const std::string &source, std::string target)
 // traversal
 void fs::visit(const std::string &dir, const std::function<void (const std::string &path)> &callback, bool recursive, VisitStrategy strategy)
 {
-    fs::visit(dir, [&] (const std::string &path, bool *) {
+    fs::visit(dir, [&](const std::string &path, bool *) {
         callback(path);
     }, recursive, strategy);
 }
@@ -234,7 +234,7 @@ std::vector<std::string> fs::collect(const std::string &dir, bool recursive, Vis
 {
     std::vector<std::string> ret;
 
-    fs::visit(dir, [&] (const std::string &path) {
+    fs::visit(dir, [&](const std::string &path) {
         ret.emplace_back(path);
     }, recursive, strategy);
 
