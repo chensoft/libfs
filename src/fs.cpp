@@ -202,9 +202,9 @@ fs::status fs::copy(const std::string &source, std::string target)
         if (!result)
             return result;
 
-        fs::walk(source, [&](const std::string &path, bool *stop) {
-            result = fs::copy(path, target);
-            *stop  = !result;
+        fs::walk(source, [&](WalkEntry &entry) {
+            result = fs::copy(entry.path(), target);
+            entry.stop = !result;
         }, false);
 
         return result;
@@ -223,19 +223,12 @@ fs::status fs::copy(const std::string &source, std::string target)
 
 // -----------------------------------------------------------------------------
 // visit
-void fs::walk(const std::string &dir, const std::function<void (const std::string &path)> &callback, bool recursive, WalkStrategy strategy)
-{
-    fs::walk(dir, [&](const std::string &path, bool *) {
-        callback(path);
-    }, recursive, strategy);
-}
-
-std::vector<std::string> fs::find(const std::string &dir, bool recursive, WalkStrategy strategy)
+std::vector<std::string> fs::find(const std::string &directory, bool recursive, WalkStrategy strategy)
 {
     std::vector<std::string> ret;
 
-    fs::walk(dir, [&](const std::string &path) {
-        ret.emplace_back(path);
+    fs::walk(directory, [&](WalkEntry &entry) {
+        ret.emplace_back(entry.path());
     }, recursive, strategy);
 
     return ret;

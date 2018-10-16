@@ -292,20 +292,25 @@ namespace fs
     // visit
     // -------------------------------------------------------------------------
 
+    enum class WalkStrategy { ChildrenFirst, SiblingsFirst, DeepestFirst };
+
+    struct WalkEntry
+    {
+        std::string root;   // parent folder
+        std::string name;   // object's name
+        bool stop = false;  // set to true if you need to stop walk immediately
+
+        std::string path() const { return root + fs::sep() + name; }
+    };
+
     // Walk the directory items use different traversal methods, exclude '.' and '..'
     // @e.g: children-first: /usr/bin, /usr/bin/zip, /usr/lib, /usr/lib/libz.a
     // @e.g: siblings-first: /usr/bin, /usr/lib, /usr/bin/zip, /usr/lib/libz.a
     // @e.g: deepest-first: /usr/bin/zip, /usr/bin, /usr/lib/libz.a, /usr/lib
-    enum class WalkStrategy { ChildrenFirst, SiblingsFirst, DeepestFirst };
-
-    // todo walk should not follow symlink
-    // todo !!!walk callback accept a PathEntry struct, has field: root, name, deep, provide follow_symlink parameter, use enum option?
-    void walk(const std::string &dir, const std::function<void (const std::string &path)> &callback, bool recursive = true, WalkStrategy strategy = WalkStrategy::ChildrenFirst);
-    void walk(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive = true, WalkStrategy strategy = WalkStrategy::ChildrenFirst);
+    void walk(const std::string &directory, const std::function<void (WalkEntry &entry)> &callback, bool recursive = true, WalkStrategy strategy = WalkStrategy::ChildrenFirst);
 
     // Find all items in the directory, exclude '.' and '..'
-    // todo provide parameter return 'absolute' or relative path
-    std::vector<std::string> find(const std::string &dir, bool recursive = true, WalkStrategy strategy = WalkStrategy::ChildrenFirst);
+    std::vector<std::string> find(const std::string &directory, bool recursive = true, WalkStrategy strategy = WalkStrategy::ChildrenFirst);
 
     // -------------------------------------------------------------------------
     // IO

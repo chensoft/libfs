@@ -145,9 +145,9 @@ bool fs::isEmpty(const std::string &path)
     // check dir has entries
     bool empty = true;
 
-    fs::walk(path, [&](const std::string &, bool *stop) {
+    fs::walk(path, [&](WalkEntry &entry) {
         empty = false;
-        *stop = true;
+        entry.stop = true;
     }, false);
 
     return empty;
@@ -321,10 +321,12 @@ fs::status fs::remove(const std::string &path)
 
     auto error = 0;
 
-    fs::walk(path, [&](const std::string &item, bool *stop) {
+    fs::walk(path, [&](WalkEntry &entry) {
+        std::string item(entry.path());
+
         if (!::DeleteFileW(fs::widen(item).c_str()) && !::RemoveDirectoryW(fs::widen(item).c_str()))
         {
-            *stop = true;
+            entry.stop = true;
             error = ::GetLastError();
         }
     }, true, WalkStrategy::DeepestFirst);
@@ -348,15 +350,13 @@ fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
 
 // -----------------------------------------------------------------------------
 // visit
-static void visit_children_first(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
+static void visit_children_first(const std::string &directory, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
 {
     WIN32_FIND_DATAW item{};
-    fs::find_handle ptr = ::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item);
+    fs::find_handle ptr = ::FindFirstFileW(fs::widen(directory + "\\*").c_str(), &item);
 
     if (ptr.val == INVALID_HANDLE_VALUE)
         return;
-
-    bool stop = false;
 
     do
     {
@@ -364,27 +364,26 @@ static void visit_children_first(const std::string &dir, const std::function<voi
         if (name == "." || name == "..")
             continue;
 
-        std::string path(dir + fs::sep());
-        path += name;
+        fs::WalkEntry entry;
+        entry.root = directory;
+        entry.name = name;
 
-        callback(path, &stop);
-        if (stop)
+        callback(entry);
+        if (entry.stop)
             return;
 
         if (recursive && item.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-            fs::walk(path, callback, recursive);
+            fs::walk(entry.path(), callback, recursive);
     } while (::FindNextFileW(ptr.val, &item));
 }
 
-static bool visit_siblings_first(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
+static bool visit_siblings_first(const std::string &directory, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
 {
     WIN32_FIND_DATAW item{};
-    fs::find_handle ptr = ::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item);
+    fs::find_handle ptr = ::FindFirstFileW(fs::widen(directory + "\\*").c_str(), &item);
 
     if (ptr.val == INVALID_HANDLE_VALUE)
         return false;
-
-    bool stop = false;
 
     std::queue<std::string> queue;
 
@@ -394,15 +393,16 @@ static bool visit_siblings_first(const std::string &dir, const std::function<voi
         if (name == "." || name == "..")
             continue;
 
-        std::string path(dir + fs::sep());
-        path += name;
+        fs::WalkEntry entry;
+        entry.root = directory;
+        entry.name = name;
 
-        callback(path, &stop);
-        if (stop)
+        callback(entry);
+        if (entry.stop)
             return true;
 
         if (recursive && item.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-            queue.emplace(std::move(path));
+            queue.emplace(entry.path());
     } while (::FindNextFileW(ptr.val, &item));
 
     while (!queue.empty())
@@ -417,15 +417,13 @@ static bool visit_siblings_first(const std::string &dir, const std::function<voi
     return false;
 }
 
-static void visit_deepest_first(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
+static void visit_deepest_first(const std::string &directory, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
 {
     WIN32_FIND_DATAW item{};
-    fs::find_handle ptr = ::FindFirstFileW(fs::widen(dir + "\\*").c_str(), &item);
+    fs::find_handle ptr = ::FindFirstFileW(fs::widen(directory + "\\*").c_str(), &item);
 
     if (ptr.val == INVALID_HANDLE_VALUE)
         return;
-
-    bool stop = false;
 
     do
     {
@@ -433,14 +431,15 @@ static void visit_deepest_first(const std::string &dir, const std::function<void
         if (name == "." || name == "..")
             continue;
 
-        std::string path(dir + fs::sep());
-        path += name;
+        fs::WalkEntry entry;
+        entry.root = directory;
+        entry.name = name;
 
         if (recursive && item.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-            fs::walk(path, callback, recursive);
+            fs::walk(entry.path(), callback, recursive);
 
-        callback(path, &stop);
-        if (stop)
+        callback(entry);
+        if (entry.stop)
             return;
     } while (::FindNextFileW(ptr.val, &item));
 }
@@ -450,15 +449,15 @@ void fs::walk(const std::string &dir, const std::function<void(const std::string
     switch (strategy)
     {
     case WalkStrategy::ChildrenFirst:
-        visit_children_first(dir, callback, recursive);
+        visit_children_first(directory, callback, recursive);
         break;
 
     case WalkStrategy::SiblingsFirst:
-        visit_siblings_first(dir, callback, recursive);
+        visit_siblings_first(directory, callback, recursive);
         break;
 
     case WalkStrategy::DeepestFirst:
-        visit_deepest_first(dir, callback, recursive);
+        visit_deepest_first(directory, callback, recursive);
         break;
     }
 }

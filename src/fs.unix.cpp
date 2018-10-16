@@ -123,9 +123,9 @@ bool fs::isEmpty(const std::string &path)
     // check dir has entries
     bool empty = true;
 
-    fs::walk(path, [&](const std::string &, bool *stop) {
+    fs::walk(path, [&](WalkEntry &entry) {
         empty = false;
-        *stop = true;
+        entry.stop = true;
     }, false);
 
     return empty;
@@ -297,10 +297,10 @@ fs::status fs::remove(const std::string &path)
 
     auto error = 0;
 
-    fs::walk(path, [&](const std::string &item, bool *stop) {
-        if (::remove(item.c_str()))
+    fs::walk(path, [&](WalkEntry &entry) {
+        if (::remove(entry.path().c_str()))
         {
-            *stop = true;
+            entry.stop = true;
             error = errno;
         }
     }, true, WalkStrategy::DeepestFirst);
@@ -310,41 +310,39 @@ fs::status fs::remove(const std::string &path)
 
 // -----------------------------------------------------------------------------
 // visit
-static void visit_children_first(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive)
+static void visit_children_first(const std::string &directory, const std::function<void (fs::WalkEntry &entry)> &callback, bool recursive)
 {
-    fs::dir_handle ptr = ::opendir(dir.c_str());
+    fs::dir_handle ptr = ::opendir(directory.c_str());
     if (!ptr.val)
         return;
 
     dirent *item{};
-    bool    stop{};
 
     while ((item = ::readdir(ptr.val)))
     {
         if ((item->d_name[0] == '.' && !item->d_name[1]) || (item->d_name[0] == '.' && item->d_name[1] == '.' && !item->d_name[2]))
             continue;
 
-        std::string path(dir + fs::sep());
-        path += item->d_name;
+        fs::WalkEntry entry;
+        entry.root = directory;
+        entry.name = item->d_name;
 
-        callback(path, &stop);
-        if (stop)
+        callback(entry);
+        if (entry.stop)
             return;
 
         if (recursive && (item->d_type == DT_DIR || item->d_type == DT_UNKNOWN))  // some filesystem will return DT_UNKNOWN
-            fs::walk(path, callback, recursive);
+            fs::walk(entry.path(), callback, recursive);
     }
 }
 
-static bool visit_siblings_first(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive)
+static bool visit_siblings_first(const std::string &directory, const std::function<void (fs::WalkEntry &entry)> &callback, bool recursive)
 {
-    fs::dir_handle ptr = ::opendir(dir.c_str());
+    fs::dir_handle ptr = ::opendir(directory.c_str());
     if (!ptr.val)
         return false;
 
     dirent *item{};
-    bool    stop{};
-
     std::queue<std::string> queue;
 
     while ((item = ::readdir(ptr.val)))
@@ -352,15 +350,16 @@ static bool visit_siblings_first(const std::string &dir, const std::function<voi
         if ((item->d_name[0] == '.' && !item->d_name[1]) || (item->d_name[0] == '.' && item->d_name[1] == '.' && !item->d_name[2]))
             continue;
 
-        std::string path(dir + fs::sep());
-        path += item->d_name;
+        fs::WalkEntry entry;
+        entry.root = directory;
+        entry.name = item->d_name;
 
-        callback(path, &stop);
-        if (stop)
+        callback(entry);
+        if (entry.stop)
             return true;
 
         if (recursive && (item->d_type == DT_DIR || item->d_type == DT_UNKNOWN))
-            queue.emplace(std::move(path));
+            queue.emplace(entry.path());
     }
 
     while (!queue.empty())
@@ -375,46 +374,46 @@ static bool visit_siblings_first(const std::string &dir, const std::function<voi
     return false;
 }
 
-static void visit_deepest_first(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive)
+static void visit_deepest_first(const std::string &directory, const std::function<void (fs::WalkEntry &entry)> &callback, bool recursive)
 {
-    fs::dir_handle ptr = ::opendir(dir.c_str());
+    fs::dir_handle ptr = ::opendir(directory.c_str());
     if (!ptr.val)
         return;
 
     dirent *item{};
-    bool    stop{};
 
     while ((item = ::readdir(ptr.val)))
     {
         if ((item->d_name[0] == '.' && !item->d_name[1]) || (item->d_name[0] == '.' && item->d_name[1] == '.' && !item->d_name[2]))
             continue;
 
-        std::string path(dir + fs::sep());
-        path += item->d_name;
+        fs::WalkEntry entry;
+        entry.root = directory;
+        entry.name = item->d_name;
 
         if (recursive && (item->d_type == DT_DIR || item->d_type == DT_UNKNOWN))
-            fs::walk(path, callback, recursive);
+            fs::walk(entry.path(), callback, recursive);
 
-        callback(path, &stop);
-        if (stop)
+        callback(entry);
+        if (entry.stop)
             return;
     }
 }
 
-void fs::walk(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive, WalkStrategy strategy)
+void fs::walk(const std::string &directory, const std::function<void (WalkEntry &entry)> &callback, bool recursive, WalkStrategy strategy)
 {
     switch (strategy)
     {
         case WalkStrategy::ChildrenFirst:
-            visit_children_first(dir, callback, recursive);
+            visit_children_first(directory, callback, recursive);
             break;
 
         case WalkStrategy::SiblingsFirst:
-            visit_siblings_first(dir, callback, recursive);
+            visit_siblings_first(directory, callback, recursive);
             break;
 
         case WalkStrategy::DeepestFirst:
-            visit_deepest_first(dir, callback, recursive);
+            visit_deepest_first(directory, callback, recursive);
             break;
     }
 }
