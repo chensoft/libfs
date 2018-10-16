@@ -350,7 +350,7 @@ fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
 
 // -----------------------------------------------------------------------------
 // visit
-static void visit_children_first(const std::string &directory, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
+static void visit_children_first(const std::string &directory, const std::function<void(fs::WalkEntry &entry)> &callback, bool recursive)
 {
     WIN32_FIND_DATAW item{};
     fs::find_handle ptr = ::FindFirstFileW(fs::widen(directory + "\\*").c_str(), &item);
@@ -377,7 +377,7 @@ static void visit_children_first(const std::string &directory, const std::functi
     } while (::FindNextFileW(ptr.val, &item));
 }
 
-static bool visit_siblings_first(const std::string &directory, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
+static bool visit_siblings_first(const std::string &directory, const std::function<void(fs::WalkEntry &entry)> &callback, bool recursive)
 {
     WIN32_FIND_DATAW item{};
     fs::find_handle ptr = ::FindFirstFileW(fs::widen(directory + "\\*").c_str(), &item);
@@ -417,7 +417,7 @@ static bool visit_siblings_first(const std::string &directory, const std::functi
     return false;
 }
 
-static void visit_deepest_first(const std::string &directory, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
+static void visit_deepest_first(const std::string &directory, const std::function<void(fs::WalkEntry &entry)> &callback, bool recursive)
 {
     WIN32_FIND_DATAW item{};
     fs::find_handle ptr = ::FindFirstFileW(fs::widen(directory + "\\*").c_str(), &item);
@@ -444,7 +444,7 @@ static void visit_deepest_first(const std::string &directory, const std::functio
     } while (::FindNextFileW(ptr.val, &item));
 }
 
-void fs::walk(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive, WalkStrategy strategy)
+void fs::walk(const std::string &directory, const std::function<void(fs::WalkEntry &entry)> &callback, bool recursive, WalkStrategy strategy)
 {
     switch (strategy)
     {
