@@ -289,27 +289,23 @@ namespace fs
     status copy(const std::string &source, std::string target);
 
     // -------------------------------------------------------------------------
-    // traversal
+    // visit
     // -------------------------------------------------------------------------
 
-    // Visit the directory items use different traversal methods, exclude '.' and '..'
+    // Walk the directory items use different traversal methods, exclude '.' and '..'
     // @e.g: children-first: /usr/bin, /usr/bin/zip, /usr/lib, /usr/lib/libz.a
     // @e.g: siblings-first: /usr/bin, /usr/lib, /usr/bin/zip, /usr/lib/libz.a
     // @e.g: deepest-first: /usr/bin/zip, /usr/bin, /usr/lib/libz.a, /usr/lib
-    enum class VisitStrategy { ChildrenFirst, SiblingsFirst, DeepestFirst };
+    enum class WalkStrategy { ChildrenFirst, SiblingsFirst, DeepestFirst };
 
-    // todo visit use template and return type F same as the lambda
-    // todo visit should return relative path
-    // todo visit should not follow symlink
-    // todo !!!visit callback accept a PathEntry struct, has field: root, name, deep, provide follow_symlink parameter, use enum option?
-    // todo all visit and collect rename to walk
-    // todo do not provide callback, return vector directly
-    void visit(const std::string &dir, const std::function<void (const std::string &path)> &callback, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
-    void visit(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
+    // todo walk should not follow symlink
+    // todo !!!walk callback accept a PathEntry struct, has field: root, name, deep, provide follow_symlink parameter, use enum option?
+    void walk(const std::string &dir, const std::function<void (const std::string &path)> &callback, bool recursive = true, WalkStrategy strategy = WalkStrategy::ChildrenFirst);
+    void walk(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive = true, WalkStrategy strategy = WalkStrategy::ChildrenFirst);
 
-    // Collect all items in the directory, exclude '.' and '..'
+    // Find all items in the directory, exclude '.' and '..'
     // todo provide parameter return 'absolute' or relative path
-    std::vector<std::string> collect(const std::string &dir, bool recursive = true, VisitStrategy strategy = VisitStrategy::ChildrenFirst);
+    std::vector<std::string> find(const std::string &dir, bool recursive = true, WalkStrategy strategy = WalkStrategy::ChildrenFirst);
 
     // -------------------------------------------------------------------------
     // IO

@@ -7,7 +7,7 @@
 #include "fs/fs.hpp"
 #include "catch.hpp"
 
-TEST_CASE("fs.traversal")
+TEST_CASE("fs.visit")
 {
     auto tmp = fs::tmp() + fs::sep() + fs::uuid();
 
@@ -25,7 +25,7 @@ TEST_CASE("fs.traversal")
     std::vector<std::string> siblings_first = {tmp + uni("/usr/bin"), tmp + uni("/usr/lib"), tmp + uni("/usr/bin/zip"), tmp + uni("/usr/lib/libz.a")};
     std::vector<std::string> deepest_first  = {tmp + uni("/usr/bin/zip"), tmp + uni("/usr/bin"), tmp + uni("/usr/lib/libz.a"), tmp + uni("/usr/lib")};
 
-    CHECK(fs::collect(tmp + uni("/usr"), true, fs::VisitStrategy::ChildrenFirst) == children_first);
-    CHECK(fs::collect(tmp + uni("/usr"), true, fs::VisitStrategy::SiblingsFirst) == siblings_first);
-    CHECK(fs::collect(tmp + uni("/usr"), true, fs::VisitStrategy::DeepestFirst)  == deepest_first);
+    CHECK(fs::find(tmp + uni("/usr"), true, fs::WalkStrategy::ChildrenFirst) == children_first);
+    CHECK(fs::find(tmp + uni("/usr"), true, fs::WalkStrategy::SiblingsFirst) == siblings_first);
+    CHECK(fs::find(tmp + uni("/usr"), true, fs::WalkStrategy::DeepestFirst)  == deepest_first);
 }

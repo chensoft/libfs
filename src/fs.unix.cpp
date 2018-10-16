@@ -123,7 +123,7 @@ bool fs::isEmpty(const std::string &path)
     // check dir has entries
     bool empty = true;
 
-    fs::visit(path, [&](const std::string &, bool *stop) {
+    fs::walk(path, [&](const std::string &, bool *stop) {
         empty = false;
         *stop = true;
     }, false);
@@ -297,19 +297,19 @@ fs::status fs::remove(const std::string &path)
 
     auto error = 0;
 
-    fs::visit(path, [&](const std::string &item, bool *stop) {
+    fs::walk(path, [&](const std::string &item, bool *stop) {
         if (::remove(item.c_str()))
         {
             *stop = true;
             error = errno;
         }
-    }, true, VisitStrategy::DeepestFirst);
+    }, true, WalkStrategy::DeepestFirst);
 
     return !error && ::remove(path.c_str()) ? status(errno) : status(error);
 }
 
 // -----------------------------------------------------------------------------
-// traversal
+// visit
 static void visit_children_first(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive)
 {
     fs::dir_handle ptr = ::opendir(dir.c_str());
@@ -332,7 +332,7 @@ static void visit_children_first(const std::string &dir, const std::function<voi
             return;
 
         if (recursive && (item->d_type == DT_DIR || item->d_type == DT_UNKNOWN))  // some filesystem will return DT_UNKNOWN
-            fs::visit(path, callback, recursive);
+            fs::walk(path, callback, recursive);
     }
 }
 
@@ -393,7 +393,7 @@ static void visit_deepest_first(const std::string &dir, const std::function<void
         path += item->d_name;
 
         if (recursive && (item->d_type == DT_DIR || item->d_type == DT_UNKNOWN))
-            fs::visit(path, callback, recursive);
+            fs::walk(path, callback, recursive);
 
         callback(path, &stop);
         if (stop)
@@ -401,19 +401,19 @@ static void visit_deepest_first(const std::string &dir, const std::function<void
     }
 }
 
-void fs::visit(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive, VisitStrategy strategy)
+void fs::walk(const std::string &dir, const std::function<void (const std::string &path, bool *stop)> &callback, bool recursive, WalkStrategy strategy)
 {
     switch (strategy)
     {
-        case VisitStrategy::ChildrenFirst:
+        case WalkStrategy::ChildrenFirst:
             visit_children_first(dir, callback, recursive);
             break;
 
-        case VisitStrategy::SiblingsFirst:
+        case WalkStrategy::SiblingsFirst:
             visit_siblings_first(dir, callback, recursive);
             break;
 
-        case VisitStrategy::DeepestFirst:
+        case WalkStrategy::DeepestFirst:
             visit_deepest_first(dir, callback, recursive);
             break;
     }

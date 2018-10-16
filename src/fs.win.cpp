@@ -145,7 +145,7 @@ bool fs::isEmpty(const std::string &path)
     // check dir has entries
     bool empty = true;
 
-    fs::visit(path, [&](const std::string &, bool *stop) {
+    fs::walk(path, [&](const std::string &, bool *stop) {
         empty = false;
         *stop = true;
     }, false);
@@ -321,13 +321,13 @@ fs::status fs::remove(const std::string &path)
 
     auto error = 0;
 
-    fs::visit(path, [&](const std::string &item, bool *stop) {
+    fs::walk(path, [&](const std::string &item, bool *stop) {
         if (!::DeleteFileW(fs::widen(item).c_str()) && !::RemoveDirectoryW(fs::widen(item).c_str()))
         {
             *stop = true;
             error = ::GetLastError();
         }
-    }, true, VisitStrategy::DeepestFirst);
+    }, true, WalkStrategy::DeepestFirst);
 
     return error ? status(error) : (::DeleteFileW(fs::widen(path).c_str()) || ::RemoveDirectoryW(fs::widen(path).c_str()) ? status() : status(::GetLastError()));
 }
@@ -347,7 +347,7 @@ fs::status fs::mkdir(const std::string &dir, std::uint16_t mode)
 }
 
 // -----------------------------------------------------------------------------
-// traversal
+// visit
 static void visit_children_first(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive)
 {
     WIN32_FIND_DATAW item{};
@@ -372,7 +372,7 @@ static void visit_children_first(const std::string &dir, const std::function<voi
             return;
 
         if (recursive && item.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-            fs::visit(path, callback, recursive);
+            fs::walk(path, callback, recursive);
     } while (::FindNextFileW(ptr.val, &item));
 }
 
@@ -437,7 +437,7 @@ static void visit_deepest_first(const std::string &dir, const std::function<void
         path += name;
 
         if (recursive && item.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-            fs::visit(path, callback, recursive);
+            fs::walk(path, callback, recursive);
 
         callback(path, &stop);
         if (stop)
@@ -445,19 +445,19 @@ static void visit_deepest_first(const std::string &dir, const std::function<void
     } while (::FindNextFileW(ptr.val, &item));
 }
 
-void fs::visit(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive, VisitStrategy strategy)
+void fs::walk(const std::string &dir, const std::function<void(const std::string &path, bool *stop)> &callback, bool recursive, WalkStrategy strategy)
 {
     switch (strategy)
     {
-    case VisitStrategy::ChildrenFirst:
+    case WalkStrategy::ChildrenFirst:
         visit_children_first(dir, callback, recursive);
         break;
 
-    case VisitStrategy::SiblingsFirst:
+    case WalkStrategy::SiblingsFirst:
         visit_siblings_first(dir, callback, recursive);
         break;
 
-    case VisitStrategy::DeepestFirst:
+    case WalkStrategy::DeepestFirst:
         visit_deepest_first(dir, callback, recursive);
         break;
     }
