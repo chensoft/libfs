@@ -307,7 +307,7 @@ namespace fs
     // @e.g: children-first: /usr/bin, /usr/bin/zip, /usr/lib, /usr/lib/libz.a
     // @e.g: siblings-first: /usr/bin, /usr/lib, /usr/bin/zip, /usr/lib/libz.a
     // @e.g: deepest-first: /usr/bin/zip, /usr/bin, /usr/lib/libz.a, /usr/lib
-    void walk(const std::string &directory, const std::function<void (WalkEntry &entry)> &callback, bool recursive = true, WalkStrategy strategy = WalkStrategy::ChildrenFirst);
+    void walk(const std::string &directory, const std::function<void (WalkEntry *entry)> &callback, bool recursive = true, WalkStrategy strategy = WalkStrategy::ChildrenFirst);
 
     // Find all items in the directory, exclude '.' and '..'
     std::vector<std::string> find(const std::string &directory, bool recursive = true, WalkStrategy strategy = WalkStrategy::ChildrenFirst);

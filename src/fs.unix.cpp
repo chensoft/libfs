@@ -123,9 +123,9 @@ bool fs::isEmpty(const std::string &path)
     // check dir has entries
     bool empty = true;
 
-    fs::walk(path, [&](WalkEntry &entry) {
+    fs::walk(path, [&](WalkEntry *entry) {
         empty = false;
-        entry.stop = true;
+        entry->stop = true;
     }, false);
 
     return empty;
@@ -297,10 +297,10 @@ fs::status fs::remove(const std::string &path)
 
     auto error = 0;
 
-    fs::walk(path, [&](WalkEntry &entry) {
-        if (::remove(entry.path().c_str()))
+    fs::walk(path, [&](WalkEntry *entry) {
+        if (::remove(entry->path().c_str()))
         {
-            entry.stop = true;
+            entry->stop = true;
             error = errno;
         }
     }, true, WalkStrategy::DeepestFirst);
@@ -310,7 +310,7 @@ fs::status fs::remove(const std::string &path)
 
 // -----------------------------------------------------------------------------
 // visit
-static void visit_children_first(const std::string &directory, const std::function<void (fs::WalkEntry &entry)> &callback, bool recursive)
+static void visit_children_first(const std::string &directory, const std::function<void (fs::WalkEntry *entry)> &callback, bool recursive)
 {
     fs::dir_handle ptr = ::opendir(directory.c_str());
     if (!ptr.val)
@@ -327,7 +327,7 @@ static void visit_children_first(const std::string &directory, const std::functi
         entry.root = directory;
         entry.name = item->d_name;
 
-        callback(entry);
+        callback(&entry);
         if (entry.stop)
             return;
 
@@ -336,7 +336,7 @@ static void visit_children_first(const std::string &directory, const std::functi
     }
 }
 
-static bool visit_siblings_first(const std::string &directory, const std::function<void (fs::WalkEntry &entry)> &callback, bool recursive)
+static bool visit_siblings_first(const std::string &directory, const std::function<void (fs::WalkEntry *entry)> &callback, bool recursive)
 {
     fs::dir_handle ptr = ::opendir(directory.c_str());
     if (!ptr.val)
@@ -354,7 +354,7 @@ static bool visit_siblings_first(const std::string &directory, const std::functi
         entry.root = directory;
         entry.name = item->d_name;
 
-        callback(entry);
+        callback(&entry);
         if (entry.stop)
             return true;
 
@@ -374,7 +374,7 @@ static bool visit_siblings_first(const std::string &directory, const std::functi
     return false;
 }
 
-static void visit_deepest_first(const std::string &directory, const std::function<void (fs::WalkEntry &entry)> &callback, bool recursive)
+static void visit_deepest_first(const std::string &directory, const std::function<void (fs::WalkEntry *entry)> &callback, bool recursive)
 {
     fs::dir_handle ptr = ::opendir(directory.c_str());
     if (!ptr.val)
@@ -394,13 +394,13 @@ static void visit_deepest_first(const std::string &directory, const std::functio
         if (recursive && (item->d_type == DT_DIR || item->d_type == DT_UNKNOWN))
             fs::walk(entry.path(), callback, recursive);
 
-        callback(entry);
+        callback(&entry);
         if (entry.stop)
             return;
     }
 }
 
-void fs::walk(const std::string &directory, const std::function<void (WalkEntry &entry)> &callback, bool recursive, WalkStrategy strategy)
+void fs::walk(const std::string &directory, const std::function<void (WalkEntry *entry)> &callback, bool recursive, WalkStrategy strategy)
 {
     switch (strategy)
     {

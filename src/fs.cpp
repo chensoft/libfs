@@ -202,9 +202,9 @@ fs::status fs::copy(const std::string &source, std::string target)
         if (!result)
             return result;
 
-        fs::walk(source, [&](WalkEntry &entry) {
-            result = fs::copy(entry.path(), target);
-            entry.stop = !result;
+        fs::walk(source, [&](WalkEntry *entry) {
+            result = fs::copy(entry->path(), target);
+            entry->stop = !result;
         }, false);
 
         return result;
@@ -227,8 +227,8 @@ std::vector<std::string> fs::find(const std::string &directory, bool recursive, 
 {
     std::vector<std::string> ret;
 
-    fs::walk(directory, [&](WalkEntry &entry) {
-        ret.emplace_back(entry.path());
+    fs::walk(directory, [&](WalkEntry *entry) {
+        ret.emplace_back(entry->path());
     }, recursive, strategy);
 
     return ret;
