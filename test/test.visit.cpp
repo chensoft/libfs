@@ -21,11 +21,19 @@ TEST_CASE("fs.visit")
         return path;
     };
 
-    std::vector<std::string> children_first = {tmp + uni("/usr/bin"), tmp + uni("/usr/bin/zip"), tmp + uni("/usr/lib"), tmp + uni("/usr/lib/libz.a")};
-    std::vector<std::string> siblings_first = {tmp + uni("/usr/bin"), tmp + uni("/usr/lib"), tmp + uni("/usr/bin/zip"), tmp + uni("/usr/lib/libz.a")};
-    std::vector<std::string> deepest_first  = {tmp + uni("/usr/bin/zip"), tmp + uni("/usr/bin"), tmp + uni("/usr/lib/libz.a"), tmp + uni("/usr/lib")};
+    std::vector<std::string> children_first_asc = {tmp + uni("/usr/bin"), tmp + uni("/usr/bin/zip"), tmp + uni("/usr/lib"), tmp + uni("/usr/lib/libz.a")};
+    std::vector<std::string> siblings_first_asc = {tmp + uni("/usr/bin"), tmp + uni("/usr/lib"), tmp + uni("/usr/bin/zip"), tmp + uni("/usr/lib/libz.a")};
+    std::vector<std::string> deepest_first_asc  = {tmp + uni("/usr/bin/zip"), tmp + uni("/usr/bin"), tmp + uni("/usr/lib/libz.a"), tmp + uni("/usr/lib")};
 
-    CHECK(fs::find(tmp + uni("/usr"), true, fs::WalkStrategy::ChildrenFirst) == children_first);
-    CHECK(fs::find(tmp + uni("/usr"), true, fs::WalkStrategy::SiblingsFirst) == siblings_first);
-    CHECK(fs::find(tmp + uni("/usr"), true, fs::WalkStrategy::DeepestFirst)  == deepest_first);
+    std::vector<std::string> children_first_desc = {tmp + uni("/usr/lib"), tmp + uni("/usr/lib/libz.a"), tmp + uni("/usr/bin"), tmp + uni("/usr/bin/zip")};
+    std::vector<std::string> siblings_first_desc = {tmp + uni("/usr/lib"), tmp + uni("/usr/bin"), tmp + uni("/usr/lib/libz.a"), tmp + uni("/usr/bin/zip")};
+    std::vector<std::string> deepest_first_desc  = {tmp + uni("/usr/lib/libz.a"), tmp + uni("/usr/lib"), tmp + uni("/usr/bin/zip"), tmp + uni("/usr/bin")};
+
+    std::vector<std::string> children_first = fs::find(tmp + uni("/usr"), true, fs::WalkStrategy::ChildrenFirst);
+    std::vector<std::string> siblings_first = fs::find(tmp + uni("/usr"), true, fs::WalkStrategy::SiblingsFirst);
+    std::vector<std::string> deepest_first  = fs::find(tmp + uni("/usr"), true, fs::WalkStrategy::DeepestFirst);
+
+    CHECK((children_first == children_first_asc || children_first == children_first_desc));
+    CHECK((siblings_first == siblings_first_asc || siblings_first == siblings_first_desc));
+    CHECK((deepest_first  == deepest_first_asc  || deepest_first  == deepest_first_desc));
 }

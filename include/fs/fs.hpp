@@ -310,6 +310,7 @@ namespace fs
     void walk(const std::string &directory, const std::function<void (WalkEntry *entry)> &callback, bool recursive = true, WalkStrategy strategy = WalkStrategy::ChildrenFirst);
 
     // Find all items in the directory, exclude '.' and '..'
+    // @note find use readdir on Unix and do not guarantee the order under the same folder
     std::vector<std::string> find(const std::string &directory, bool recursive = true, WalkStrategy strategy = WalkStrategy::ChildrenFirst);
 
     // -------------------------------------------------------------------------
